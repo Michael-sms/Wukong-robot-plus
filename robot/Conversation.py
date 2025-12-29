@@ -17,8 +17,9 @@ from robot.LifeCycleHandler import LifeCycleHandler
 from robot.Brain import Brain
 from robot.Scheduler import Scheduler
 from robot.sdk import History
-from .sdk.VoiceProcessor import SileroPerception
+#from .sdk.VoiceProcessor import SileroPerception
 from robot.sdk.TencentSpeech import TencentSpeech
+from robot.sdk.SpeakerID import SpeakerEncoder
 from robot import (
     AI,
     ASR,
@@ -57,9 +58,11 @@ class Conversation(object):
         self.tts_index = 0
         self.tts_lock = threading.Lock()
         self.play_lock = threading.Lock()
-        self.perception = SileroPerception()
+        #self.perception = SileroPerception()
         self.vads_threshold = 0.8 # 降低静音截断阈值，实现“停顿即截”
-        self.streaming_mode = True # 开启流式模式        
+        self.streaming_mode = True # 开启流式模式
+        self.speaker_id = SpeakerEncoder() # 初始化声纹识别模块
+        self.current_user_context = None # 当前用户画像        
 
     def _lastCompleted(self, index, onCompleted):
         # logger.debug(f"{index}, {self.tts_index}, {self.tts_count}")
@@ -224,6 +227,12 @@ class Conversation(object):
 
     def doConverse(self, fp, callback=None, onSay=None, onStream=None):
         self.interrupt()
+
+        # --- [成员2] 插入点：在 ASR 之前或同时进行声纹识别 ---
+        # 建议使用线程异步执行，以免阻塞 ASR
+        threading.Thread(target=self.identify_speaker, args=(fp,)).start()
+        # -------------------------------------------------
+
         try:
             query = self.asr.transcribe(fp)
         except Exception as e:
@@ -298,6 +307,27 @@ class Conversation(object):
             result = self._ttsAction(line, cache, index, onCompleted)
             return result
         return None
+
+    # 在 Conversation.py 中添加辅助方法
+    def identify_speaker(self, audio_fp):
+        """
+        识别说话人并注入 Context
+        """
+        with open(audio_fp, 'rb') as f:
+            audio_data = f.read()
+        
+        user, score = self.speaker_id.identify(audio_data)
+        
+        if user:
+            # 注入用户画像到当前会话 Context
+            self.current_user_context = user['context']
+            logger.info(f"[成员2] 已锁定用户: {user['name']}, 偏好角色: {user['context'].get('fav_char')}")
+            
+            # 这里可以将 context 传递给 AI 模块
+            # self.ai.set_context(self.current_user_context) 
+        else:
+            self.current_user_context = None
+            logger.info("[成员2] 未识别到注册用户，使用默认人设")
 
     def _tts(self, lines, cache, onCompleted=None):
         """
@@ -410,7 +440,7 @@ class Conversation(object):
         audios = self._tts(lines, cache, onCompleted)
         self._after_play(msg, audios, plugin)
 
-    def activeListen(self, silent=False):
+    def activeListen(self, silent=False, return_fp=False):
         """
         主动问一个问题(适用于多轮对话)
         :param silent: 是否不触发唤醒表现（主要用于极客模式）
@@ -428,11 +458,15 @@ class Conversation(object):
                 [constants.getHotwordModel(config.get("hotword", "wukong.pmdl"))]
             )
             voice = listener.listen(
-                silent_count_threshold=config.get("silent_threshold", 15),
+                silent_count_threshold=config.get("silent_threshold", 150),
                 recording_timeout=config.get("recording_timeout", 5) * 4,
             )
             if not silent:
                 self.lifeCycleHandler.onThink()
+            
+            if return_fp:
+                return voice
+
             if voice:
                 query = self.asr.transcribe(voice)
                 utils.check_and_delete(voice)
