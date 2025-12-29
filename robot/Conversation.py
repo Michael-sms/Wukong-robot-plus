@@ -55,6 +55,8 @@ class Conversation(object):
         self.tts_index = 0
         self.tts_lock = threading.Lock()
         self.play_lock = threading.Lock()
+        self.vads_threshold = 0.8 # 降低静音截断阈值，实现“停顿即截”
+        self.streaming_mode = True # 开启流式模式        
 
     def _lastCompleted(self, index, onCompleted):
         # logger.debug(f"{index}, {self.tts_index}, {self.tts_count}")

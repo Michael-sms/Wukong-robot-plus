@@ -526,6 +526,13 @@ class CozeRobot(AbstractRobot):
         Arguments:
         texts -- user input, typically speech, to be parsed by a module
         """
+
+        # 优先处理身份查询        
+        if any(word in query for word in ["你是谁", "你叫什么"]):
+            robot_name = config.get('robot_name_cn', '千早爱音')
+            return f"我是{robot_name}，很高兴为你服务。"
+                
+        # 原有的 AI 请求逻辑
         msg = "".join(texts)
         msg = utils.stripPunctuation(msg)
         try:
