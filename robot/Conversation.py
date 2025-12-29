@@ -17,6 +17,8 @@ from robot.LifeCycleHandler import LifeCycleHandler
 from robot.Brain import Brain
 from robot.Scheduler import Scheduler
 from robot.sdk import History
+from .sdk.VoiceProcessor import SileroPerception
+from robot.sdk.TencentSpeech import TencentSpeech
 from robot import (
     AI,
     ASR,
@@ -55,6 +57,7 @@ class Conversation(object):
         self.tts_index = 0
         self.tts_lock = threading.Lock()
         self.play_lock = threading.Lock()
+        self.perception = SileroPerception()
         self.vads_threshold = 0.8 # 降低静音截断阈值，实现“停顿即截”
         self.streaming_mode = True # 开启流式模式        
 
