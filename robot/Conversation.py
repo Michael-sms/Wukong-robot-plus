@@ -440,11 +440,13 @@ class Conversation(object):
         audios = self._tts(lines, cache, onCompleted)
         self._after_play(msg, audios, plugin)
 
-    def activeListen(self, silent=False, return_fp=False):
+    def activeListen(self, silent=False, return_fp=False, silent_threshold=None, recording_timeout=None):
         """
         主动问一个问题(适用于多轮对话)
         :param silent: 是否不触发唤醒表现（主要用于极客模式）
-        :param
+        :param return_fp: 是否返回录音文件路径而不是转写文本
+        :param silent_threshold: 静音检测阈值，值越大等待用户说完的时间越长
+        :param recording_timeout: 最大录音时长（秒），None则使用配置默认值
         """
         if self.immersiveMode:
             self.player.stop()
@@ -457,9 +459,12 @@ class Conversation(object):
             listener = snowboydecoder.ActiveListener(
                 [constants.getHotwordModel(config.get("hotword", "wukong.pmdl"))]
             )
+            # 使用传入的参数或配置默认值
+            _silent_threshold = silent_threshold if silent_threshold is not None else config.get("silent_threshold", 150)
+            _recording_timeout = (recording_timeout if recording_timeout is not None else config.get("recording_timeout", 5)) * 4
             voice = listener.listen(
-                silent_count_threshold=config.get("silent_threshold", 150),
-                recording_timeout=config.get("recording_timeout", 5) * 4,
+                silent_count_threshold=_silent_threshold,
+                recording_timeout=_recording_timeout,
             )
             if not silent:
                 self.lifeCycleHandler.onThink()

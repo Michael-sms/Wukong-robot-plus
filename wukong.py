@@ -47,7 +47,7 @@ class Wukong(object):
                 utils.get_file_content(
                     os.path.join(constants.APP_PATH, "VERSION"), "r"
                 ).strip(),
-                config.get("/server/host", "0.0.0.0"),
+                config.get("/server/host", "127.0.0.1"),
                 config.get("/server/port", "5001"),
             )
         )
