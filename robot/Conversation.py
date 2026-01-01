@@ -20,6 +20,7 @@ from robot.sdk import History
 #from .sdk.VoiceProcessor import SileroPerception
 from robot.sdk.TencentSpeech import TencentSpeech
 from robot.sdk.SpeakerID import SpeakerEncoder
+from robot import CharacterVoice
 from robot import (
     AI,
     ASR,
@@ -62,7 +63,8 @@ class Conversation(object):
         self.vads_threshold = 0.8 # 降低静音截断阈值，实现“停顿即截”
         self.streaming_mode = True # 开启流式模式
         self.speaker_id = SpeakerEncoder() # 初始化声纹识别模块
-        self.current_user_context = None # 当前用户画像        
+        self.current_user_context = None # 当前用户画像
+        self.default_tts = None # 保存默认的TTS引擎        
 
     def _lastCompleted(self, index, onCompleted):
         # logger.debug(f"{index}, {self.tts_index}, {self.tts_count}")
@@ -124,6 +126,7 @@ class Conversation(object):
             self.asr = ASR.get_engine_by_slug(config.get("asr_engine", "tencent-asr"))
             self.ai = AI.get_robot_by_slug(config.get("robot", "tuling"))
             self.tts = TTS.get_engine_by_slug(config.get("tts_engine", "baidu-tts"))
+            self.default_tts = self.tts  # 保存默认TTS引擎
             self.nlu = NLU.get_engine_by_slug(config.get("nlu_engine", "unit"))
             self.player = Player.SoxPlayer()
             self.brain = Brain(self)
@@ -321,13 +324,69 @@ class Conversation(object):
         if user:
             # 注入用户画像到当前会话 Context
             self.current_user_context = user['context']
-            logger.info(f"[成员2] 已锁定用户: {user['name']}, 偏好角色: {user['context'].get('fav_char')}")
+            fav_char = user['context'].get('fav_char')
+            logger.info(f"[成员2] 已锁定用户: {user['name']}, 偏好角色: {fav_char}")
+            
+            # 根据用户喜欢的角色切换TTS语音
+            self.switch_character_voice(fav_char)
             
             # 这里可以将 context 传递给 AI 模块
             # self.ai.set_context(self.current_user_context) 
         else:
             self.current_user_context = None
+            # 恢复默认TTS
+            self.restore_default_voice()
             logger.info("[成员2] 未识别到注册用户，使用默认人设")
+
+    def switch_character_voice(self, character_name):
+        """
+        根据角色名切换TTS语音
+        :param character_name: 角色名称
+        """
+        if not character_name:
+            logger.info("未指定角色，保持当前语音")
+            return
+        
+        # 获取角色对应的语音配置
+        voice_config = CharacterVoice.get_character_voice(character_name)
+        engine = voice_config.get('engine')
+        
+        logger.info(f"尝试切换到角色 '{character_name}' 的语音，引擎: {engine}")
+        
+        try:
+            if engine == 'edge-tts':
+                # 使用 Edge-TTS，切换 voice
+                voice = voice_config.get('voice')
+                self.tts = TTS.EdgeTTS(voice=voice)
+                logger.info(f"已切换到 Edge-TTS 语音: {voice} (角色: {character_name})")
+                
+            elif engine == 'vits':
+                # 使用 VITS 模型
+                server_url = voice_config.get('server_url')
+                speaker_id = voice_config.get('speaker_id', 0)
+                # 这里需要你实现 VITS TTS 类
+                # self.tts = TTS.VITS(server_url=server_url, speaker_id=speaker_id)
+                logger.warning("VITS 引擎需要自行实现，当前使用默认语音")
+                
+            elif engine == 'bert-vits2':
+                # 使用 Bert-VITS2 模型
+                server_url = voice_config.get('server_url')
+                speaker_id = voice_config.get('speaker_id')
+                # 这里需要你实现 Bert-VITS2 TTS 类
+                # self.tts = TTS.BertVITS2(server_url=server_url, speaker_id=speaker_id)
+                logger.warning("Bert-VITS2 引擎需要自行实现，当前使用默认语音")
+                
+            else:
+                logger.warning(f"未知的TTS引擎: {engine}，保持当前语音")
+                
+        except Exception as e:
+            logger.error(f"切换角色语音失败: {e}，保持当前语音")
+    
+    def restore_default_voice(self):
+        """恢复默认语音"""
+        if self.default_tts:
+            self.tts = self.default_tts
+            logger.info("已恢复默认语音")
 
     def _tts(self, lines, cache, onCompleted=None):
         """
