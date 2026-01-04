@@ -20,6 +20,7 @@ from urllib.parse import unquote
 
 from robot.sdk.History import History
 from robot import config, utils, logging, Updater, constants
+from robot.LatencyMonitor import get_monitor
 from tools import make_json, solr_tools
 
 logger = logging.getLogger(__name__)
@@ -120,20 +121,75 @@ class ChatWebSocketHandler(WebSocketHandler, BaseHandler):
     clients = set()
 
     def open(self):
+        """WebSocket连接建立时调用"""
         self.clients.add(self)
+        self.ws_start_time = time.time()  # 记录连接建立时间
+        self.ping_count = 0  # ping计数
+        logger.info(f"WebSocket连接已建立: {self.request.remote_ip}")
 
     def on_close(self):
+        """WebSocket连接关闭时调用"""
         self.clients.remove(self)
+        connection_duration = time.time() - self.ws_start_time
+        logger.info(f"WebSocket连接已关闭: {self.request.remote_ip}, 持续时间: {connection_duration:.2f}秒")
+
+    def on_message(self, message):
+        """
+        接收到客户端消息时调用
+        用于检测往返延迟（RTT）
+        """
+        try:
+            data = json.loads(message)
+            # 如果客户端发送了带时间戳的ping消息
+            if data.get('action') == 'ping' and 'timestamp' in data:
+                client_timestamp = data['timestamp']
+                server_time = time.time() * 1000  # 转换为毫秒
+                latency = server_time - client_timestamp
+                
+                # 记录延迟到监控器
+                monitor = get_monitor()
+                monitor.record_ws_latency(latency)
+                
+                # 发送pong响应
+                pong_response = {
+                    'action': 'pong',
+                    'client_timestamp': client_timestamp,
+                    'server_timestamp': server_time,
+                    'latency': latency
+                }
+                self.write_message(json.dumps(pong_response))
+                self.ping_count += 1
+                
+                # 每10次ping记录一次统计
+                if self.ping_count % 10 == 0:
+                    stats = monitor.get_ws_stats()
+                    if stats:
+                        logger.debug(f"WebSocket统计 - 平均延迟: {stats['avg_latency']:.2f}ms, "
+                                   f"抖动: {stats['avg_jitter']:.2f}ms")
+        except Exception as e:
+            logger.debug(f"处理WebSocket消息时出错: {e}")
 
     def send_response(self, msg, uuid, plugin=""):
+        """
+        向客户端发送响应消息
+        添加时间戳用于延迟追踪
+        """
+        send_time = time.time() * 1000  # 毫秒时间戳
         response = {
             "action": "new_message",
             "type": 1,
             "text": msg,
             "uuid": uuid,
             "plugin": plugin,
+            "timestamp": send_time  # 添加服务器发送时间戳
         }
-        self.write_message(json.dumps(response))
+        try:
+            self.write_message(json.dumps(response))
+        except Exception as e:
+            logger.error(f"WebSocket发送失败: {e}")
+            # 记录丢包
+            monitor = get_monitor()
+            monitor.record_ws_packet_loss()
 
 
 class ChatHandler(BaseHandler):

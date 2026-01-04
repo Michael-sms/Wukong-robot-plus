@@ -33,6 +33,7 @@ from robot import (
     TTS,
     utils,
 )
+from robot.LatencyMonitor import get_monitor
 
 
 logger = logging.getLogger(__name__)
@@ -64,8 +65,9 @@ class Conversation(object):
         self.streaming_mode = True # 开启流式模式
         self.speaker_id = SpeakerEncoder() # 初始化声纹识别模块
         self.current_user_context = None # 当前用户画像
-        self.default_tts = None # 保存默认的TTS引擎        
-
+        self.default_tts = None # 保存默认的TTS引擎                
+        self.latency_monitor = get_monitor() # 延迟监控器
+        self.current_session_id = None # 当前会话ID
     def _lastCompleted(self, index, onCompleted):
         # logger.debug(f"{index}, {self.tts_index}, {self.tts_count}")
         if index >= self.tts_count - 1:
@@ -152,6 +154,12 @@ class Conversation(object):
         :onSay: 朗读时的回调
         :onStream: 流式输出时的回调
         """
+        # 启动延迟追踪
+        if not UUID or UUID == "" or UUID == "null":
+            UUID = str(uuid.uuid1())
+        self.current_session_id = UUID
+        tracker = self.latency_monitor.start_session(UUID)
+        
         statistic.report(1)
         self.interrupt()
         self.appendHistory(0, query, UUID)
@@ -168,7 +176,13 @@ class Conversation(object):
 
         lastImmersiveMode = self.immersiveMode
 
+        # NLU解析延迟追踪
+        self.latency_monitor.mark_stage(self.current_session_id, 'nlu_start')
         parsed = self.doParse(query)
+        self.latency_monitor.mark_stage(self.current_session_id, 'nlu_end')
+        
+        # 技能处理延迟追踪
+        self.latency_monitor.mark_stage(self.current_session_id, 'skill_start')
         if self._InGossip(query) or not self.brain.query(query, parsed):
             # 进入闲聊
             if self.nlu.hasIntent(parsed, "PAUSE") or "闭嘴" in query:
@@ -230,17 +244,26 @@ class Conversation(object):
 
     def doConverse(self, fp, callback=None, onSay=None, onStream=None):
         self.interrupt()
+        
+        # 启动会话（如果还没启动）
+        session_id = str(uuid.uuid1())
+        self.current_session_id = session_id
+        tracker = self.latency_monitor.start_session(session_id)
 
         # --- [成员2] 插入点：在 ASR 之前或同时进行声纹识别 ---
         # 建议使用线程异步执行，以免阻塞 ASR
         threading.Thread(target=self.identify_speaker, args=(fp,)).start()
         # -------------------------------------------------
 
+        # ASR延迟追踪
+        self.latency_monitor.mark_stage(session_id, 'asr_start')
         try:
             query = self.asr.transcribe(fp)
         except Exception as e:
             logger.critical(f"ASR识别失败：{e}", stack_info=True)
             traceback.print_exc()
+        self.latency_monitor.mark_stage(session_id, 'asr_end')
+        
         utils.check_and_delete(fp)
         try:
             self.doResponse(query, callback, onSay, onStream)
@@ -325,7 +348,7 @@ class Conversation(object):
             # 注入用户画像到当前会话 Context
             self.current_user_context = user['context']
             fav_char = user['context'].get('fav_char')
-            logger.info(f"[成员2] 已锁定用户: {user['name']}, 偏好角色: {fav_char}")
+            logger.info(f"[成员] 已锁定用户: {user['name']}, 偏好角色: {fav_char}")
             
             # 根据用户喜欢的角色切换TTS语音
             self.switch_character_voice(fav_char)
@@ -336,7 +359,7 @@ class Conversation(object):
             self.current_user_context = None
             # 恢复默认TTS
             self.restore_default_voice()
-            logger.info("[成员2] 未识别到注册用户，使用默认人设")
+            logger.info("[成员] 未识别到注册用户，使用默认人设")
 
     def switch_character_voice(self, character_name):
         """
@@ -482,6 +505,10 @@ class Conversation(object):
         :param onCompleted: 完成的回调
         :param append_history: 是否要追加到聊天记录
         """
+        # TTS延迟追踪开始
+        if self.current_session_id:
+            self.latency_monitor.mark_stage(self.current_session_id, 'tts_start')
+        
         if append_history:
             self.appendHistory(1, msg, plugin=plugin)
         msg = utils.stripPunctuation(msg).strip()
@@ -491,12 +518,29 @@ class Conversation(object):
 
         logger.info(f"即将朗读语音：{msg}")
         lines = re.split("。|！|？|\!|\?|\n", msg)
-        if onCompleted is None:
-            onCompleted = lambda: self._onCompleted(msg)
+        
+        # 创建一个包装的回调来标记TTS和播放完成
+        def wrapped_onCompleted():
+            if self.current_session_id:
+                self.latency_monitor.mark_stage(self.current_session_id, 'tts_end')
+                self.latency_monitor.mark_stage(self.current_session_id, 'play_end')
+                self.latency_monitor.mark_stage(self.current_session_id, 'response_end')
+                # 结束会话并生成报告
+                self.latency_monitor.end_session(self.current_session_id)
+            if onCompleted:
+                onCompleted()
+            else:
+                self._onCompleted(msg)
+        
         self.tts_index = 0
         self.tts_count = len(lines)
         logger.debug(f"tts_count: {self.tts_count}")
-        audios = self._tts(lines, cache, onCompleted)
+        
+        # 标记播放开始
+        if self.current_session_id:
+            self.latency_monitor.mark_stage(self.current_session_id, 'play_start')
+        
+        audios = self._tts(lines, cache, wrapped_onCompleted)
         self._after_play(msg, audios, plugin)
 
     def activeListen(self, silent=False, return_fp=False, silent_threshold=None, recording_timeout=None):
