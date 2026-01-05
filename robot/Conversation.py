@@ -383,6 +383,22 @@ class Conversation(object):
                 self.tts = TTS.EdgeTTS(voice=voice)
                 logger.info(f"已切换到 Edge-TTS 语音: {voice} (角色: {character_name})")
                 
+            elif engine == 'gpt-sovits':
+                # 使用 GPT-SoVITS 模型
+                self.tts = TTS.GPTSoVITS(
+                    server_url=voice_config.get('server_url'),
+                    refer_wav_path=voice_config.get('refer_wav_path'),
+                    prompt_text=voice_config.get('prompt_text'),
+                    prompt_language=voice_config.get('prompt_language', 'zh'),
+                    text_language=voice_config.get('text_language', 'zh'),
+                    top_k=voice_config.get('top_k', 15),
+                    top_p=voice_config.get('top_p', 1.0),
+                    temperature=voice_config.get('temperature', 1.0),
+                    speed=voice_config.get('speed', 1.0),
+                    timeout=voice_config.get('timeout', 30)
+                )
+                logger.info(f"已切换到 GPT-SoVITS 语音 (角色: {character_name})")
+                
             elif engine == 'vits':
                 # 使用 VITS 模型
                 server_url = voice_config.get('server_url')
@@ -407,9 +423,36 @@ class Conversation(object):
     
     def restore_default_voice(self):
         """恢复默认语音"""
-        if self.default_tts:
-            self.tts = self.default_tts
-            logger.info("已恢复默认语音")
+        # 使用 CharacterVoice 中定义的默认语音配置
+        default_voice_config = CharacterVoice.DEFAULT_VOICE
+        engine = default_voice_config.get('engine')
+        
+        logger.info(f"恢复默认语音，引擎: {engine}")
+        
+        if engine == 'edge-tts':
+            voice = default_voice_config.get('voice')
+            self.tts = TTS.EdgeTTS(voice=voice)
+            logger.info(f"已切换到默认 Edge-TTS 语音: {voice}")
+        elif engine == 'gpt-sovits':
+            # 使用 GPT-SoVITS 默认配置
+            self.tts = TTS.GPTSoVITS(
+                server_url=default_voice_config.get('server_url'),
+                refer_wav_path=default_voice_config.get('refer_wav_path'),
+                prompt_text=default_voice_config.get('prompt_text'),
+                prompt_language=default_voice_config.get('prompt_language', 'zh'),
+                text_language=default_voice_config.get('text_language', 'zh'),
+                top_k=default_voice_config.get('top_k', 15),
+                top_p=default_voice_config.get('top_p', 1.0),
+                temperature=default_voice_config.get('temperature', 1.0),
+                speed=default_voice_config.get('speed', 1.0),
+                timeout=default_voice_config.get('timeout', 30)
+            )
+            logger.info(f"已切换到默认 GPT-SoVITS 语音")
+        else:
+            # 其他引擎，恢复到原始默认 TTS
+            if self.default_tts:
+                self.tts = self.default_tts
+                logger.info("已恢复到系统默认语音")
 
     def _tts(self, lines, cache, onCompleted=None):
         """

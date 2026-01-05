@@ -19,6 +19,12 @@ def is_speech(frame):
     return (energy > energy_threshold) and is_vad
 ```
 
+#### 关键参数
+- **`sample_rate`**: 采样率，默认 16000 Hz
+- **`frame_duration`**: 帧长度，默认 30ms
+- **`level`**: WebRTC VAD 灵敏度等级（0-3），默认 3（最严格）
+- **`energy_threshold`**: 能量阈值基准，默认 500，可根据环境噪音动态调整
+
 ### 预期效果
 - **抗噪能力增强**: 在嘈杂环境下能有效过滤背景噪音，避免误唤醒或误录音。
 - **精准截断**: 实现了“停顿即截”的效果，用户说话结束后机器人能更敏锐地停止录音，提升交互的流畅度和响应速度。
@@ -31,6 +37,10 @@ def is_speech(frame):
 - **模型架构**: 使用 **ECAPA-TDNN** (基于 `speechbrain/spkrec-ecapa-voxceleb`) 深度神经网络模型。
 - **特征提取**: 将任意长度的语音片段映射为 **192维** 的声纹特征向量 (Embedding)。
 - **向量检索**: 集成 **Faiss** 向量数据库，使用余弦相似度 (Cosine Similarity) 进行高效的特征比对和 Top-1 用户检索。
+- **相似度阈值**: 默认设置为 **0.25**，该阈值适用于 ECAPA-TDNN 模型。阈值范围建议：
+  - **0.20-0.25**: 宽松，适合家庭环境，可能出现误识别
+  - **0.25-0.30**: 平衡，推荐设置
+  - **0.30-0.40**: 严格，适合安全要求高的场景
 - **相关文件**: `robot/sdk/SpeakerID.py`
 
 ### 用户注册功能
@@ -44,13 +54,18 @@ def is_speech(frame):
 #### 伪代码
 ```python
 # 录音 -> 提取特征 -> Faiss 入库 -> 保存画像
-audio = record(long_timeout)
-vector = ecapa_tdnn.encode(audio)
-faiss.normalize_L2(vector)
-faiss_index.add(vector)
+audio = record(long_timeout)  # silent_threshold=300, timeout=15s
+vector = ecapa_tdnn.encode(audio)  # 输出 (1, 192) 向量
+faiss.normalize_L2(vector)  # L2归一化，用于余弦相似度计算
+faiss_index.add(vector)  # 加入内存索引
 user_db.append({id, name, context, embedding=vector})
-save(user_db)
+save(user_db)  # 持久化到 static/user_db.json
 ```
+
+#### 录音参数优化
+- **`silent_threshold`**: 声纹采集时设为 **300**（高于普通对话的 150-200），给用户更多思考和说话时间
+- **`recording_timeout`**: 最大录音时长 **15秒**，确保采集足够长的语音样本以提取稳定特征
+- **推荐采集内容**: 让用户朗读一段完整的句子（如自我介绍），而非单个词语
 
 ### 声纹验证功能
 - **实现思路**:
@@ -92,12 +107,18 @@ else:
 #### 伪代码（删除后重建索引）
 ```python
 deleted = users.pop(target_idx)
-matrix = np.vstack([u.embedding for u in users])
-faiss_index.reset()
-faiss.normalize_L2(matrix)
-faiss_index.add(matrix)
-save(user_db)
+# 重建索引步骤：
+faiss_index.reset()  # 清空旧索引
+if users:  # 如果还有剩余用户
+    embeddings = [np.array(u['embedding']) for u in users]
+    matrix = np.vstack(embeddings)  # 堆叠成矩阵 (N, 192)
+    faiss.normalize_L2(matrix)  # L2归一化
+    faiss_index.add(matrix)  # 批量添加
+save(user_db)  # 同步到文件
 ```
+
+#### 索引重建的必要性
+删除用户后，Faiss 索引中的向量位置与 `user_db` 数组索引必须保持一致。由于 Faiss 不支持按索引删除单个向量，因此采用**全量重建**策略：清空索引后重新添加所有剩余用户的向量。
 
 ---
 
@@ -126,11 +147,27 @@ save(user_db)
 
 #### 伪代码（角色语音选择）
 ```python
-fav_char = current_user.context.get("fav_char")
-voice_cfg = CharacterVoice.get_character_voice(fav_char)
-tts.switch(voice_cfg)
+# 声纹识别后自动切换
+user, score = speaker_id.identify(audio)
+if user:
+    fav_char = user['context'].get('fav_char')
+    voice_cfg = CharacterVoice.get_character_voice(fav_char)
+    
+    if voice_cfg['engine'] == 'edge-tts':
+        tts = EdgeTTS(voice=voice_cfg['voice'])
+    elif voice_cfg['engine'] == 'vits':
+        tts = VITS(server_url, speaker_id)
+    
+    current_user_context = user['context']  # 保存上下文
 tts.speak(reply)
 ```
+
+#### 动态切换机制
+系统在 `Conversation.py` 中实现了 TTS 引擎的动态切换：
+1. **声纹识别触发**: 当 `identify_speaker()` 成功识别用户后，自动调用 `switch_character_voice()`
+2. **保存默认引擎**: 初始化时保存 `default_tts`，未识别到用户时可恢复默认语音
+3. **支持多引擎**: 目前完整支持 Edge-TTS，VITS/Bert-VITS2 预留接口
+4. **实时生效**: 切换后立即对当前会话的所有 TTS 输出生效
 
 ---
 
@@ -142,6 +179,28 @@ tts.speak(reply)
   - 实时计算 WebSocket 通信的 **RTT (往返时延)**。
   - 监控网络 **抖动 (Jitter)** 和 **丢包率**，评估网络稳定性。
 - **阈值分析**: 对比各阶段耗时与预设阈值（如 ASR < 250ms），自动判定是否达标。
+
+#### 各阶段延迟阈值配置
+| 阶段 | 阈值 (ms) | 说明 |
+|------|----------|------|
+| 唤醒检测 (wakeup) | 500 | 从检测到唤醒词到开始录音 |
+| ASR 识别 (asr) | 1500 | 语音转文字耗时（网络服务） |
+| NLU 理解 (nlu) | 800 | 意图识别与槽位提取（网络服务） |
+| 技能处理 (skill) | 3000 | 插件逻辑执行时间（含多次TTS调用） |
+| TTS 合成 (tts) | 5000 | 文字转语音合成（Edge-TTS网络服务） |
+| 音频播放 (play) | 500 | 音频输出延迟 |
+| **总延迟 (total)** | **15000** | **端到端响应时间（15秒内合理）** |
+| WebSocket延迟 (ws_latency) | 100 | 单次通信RTT |
+| WebSocket抖动 (ws_jitter) | 50 | 连续延迟波动 |
+
+> **注意**: 以上阈值是针对使用网络服务（腾讯云ASR、百度NLU、Edge-TTS等）的实际场景设定。如果您使用本地模型，可以将阈值调整得更严格。
+
+#### 抖动计算公式
+```python
+jitter = avg(|latency[i] - latency[i-1]|)  # 连续延迟的平均差值
+if jitter > 20ms:
+    warn("网络抖动过大，可能导致断音")
+```
 
 #### 伪代码（单次会话追踪）
 ```python

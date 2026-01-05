@@ -8,7 +8,7 @@
 # 支持多种TTS引擎：edge-tts, vits, bert-vits2, gpt-sovits
 CHARACTER_VOICE_MAP = {
     # 示例：使用 edge-tts 的音色模拟角色
-    "千早爱音": {
+    "默认": {
         "engine": "edge-tts",
         "voice": "zh-CN-XiaoxiaoNeural",  # 温柔女声
         "description": "温柔可爱的少女音"
@@ -39,12 +39,29 @@ CHARACTER_VOICE_MAP = {
     #     "speaker_id": "yoimiya",
     #     "description": "Bert-VITS2 宵宫语音"
     # },
+
+    # GPT-SoVITS 示例（局域网服务器）
+    # 重要：ref_audio_path 必须是服务器端的文件路径，不是本地路径
+    "千早爱音": {
+        "engine": "gpt-sovits",
+        "server_url": "http://192.168.1.103:9880",  # 您的服务器IP
+        # 参考音频路径（服务器端的路径）
+        "ref_audio_path": "C:/Users/Usotsuki_Kaze/Desktop/MyGO!!!!!/千早愛音/あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし.mp3",
+        "prompt_text": "あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし",
+        "prompt_lang": "ja",      # 参考音频语言：日语
+        "text_lang": "zh",        # 合成文本语言：中文（可改为 ja 合成日语）
+        "description": "GPT-SoVITS 千早爱音语音（日语音色克隆）"
+    },
 }
 
 # 默认语音配置（当角色未配置或未识别到用户时使用）
 DEFAULT_VOICE = {
-    "engine": "edge-tts",
-    "voice": "zh-CN-XiaoxiaoNeural"
+    "engine": "gpt-sovits",
+    "server_url": "http://192.168.1.103:9880",
+    "ref_audio_path": "C:/Users/Usotsuki_Kaze/Desktop/MyGO!!!!!/千早愛音/あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし.mp3",
+    "prompt_text": "あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし",
+    "prompt_lang": "ja",
+    "text_lang": "zh"
 }
 
 # Edge-TTS 推荐音色列表（供用户选择）
@@ -103,4 +120,11 @@ def list_available_characters():
 
 def get_edge_voice_by_name(name):
     """根据中文名获取Edge-TTS音色代码"""
-    return EDGE_TTS_VOICES.get(name, DEFAULT_VOICE["voice"])
+    # 修复：只在 DEFAULT_VOICE 是 edge-tts 引擎时才返回 voice
+    if name in EDGE_TTS_VOICES:
+        return EDGE_TTS_VOICES[name]
+    # 如果 DEFAULT_VOICE 是 edge-tts 且有 voice 键
+    if DEFAULT_VOICE.get("engine") == "edge-tts" and "voice" in DEFAULT_VOICE:
+        return DEFAULT_VOICE["voice"]
+    # 否则返回一个默认的 edge-tts 音色
+    return "zh-CN-XiaoxiaoNeural"

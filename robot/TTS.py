@@ -17,7 +17,7 @@ from pathlib import Path
 from pypinyin import lazy_pinyin
 from pydub import AudioSegment
 from abc import ABCMeta, abstractmethod
-from .sdk import TencentSpeech, AliSpeech, XunfeiSpeech, atc, VITSClient, VolcengineSpeech
+from .sdk import TencentSpeech, AliSpeech, XunfeiSpeech, atc, VITSClient, VolcengineSpeech, GPTSoVITSClient
 import requests
 from xml.etree import ElementTree
 
@@ -495,6 +495,151 @@ class VolcengineTTS(AbstractTTS):
                 f.write(result)
             logger.info(f"{self.SLUG} 语音合成成功，合成路径：{tmpfile}")
             return tmpfile
+
+
+class GPTSoVITS(AbstractTTS):
+    """
+    GPT-SoVITS 语音合成
+    需要自行搭建 GPT-SoVITS 推理服务器：https://github.com/RVC-Boss/GPT-SoVITS
+    
+    参数说明：
+    server_url: 服务器地址，如 http://127.0.0.1:9880
+    refer_wav_path: 参考音频路径（可选，用于零样本克隆）
+    prompt_text: 参考音频对应的文本（可选）
+    prompt_language: 参考音频语言，默认 "zh"
+    text_language: 合成文本语言，默认 "zh"
+    cut_punc: 文本切分的标点符号，默认中英文标点
+    top_k: top_k 采样参数，默认 15
+    top_p: top_p 采样参数，默认 1.0
+    temperature: 温度参数，默认 1.0
+    speed: 语速，默认 1.0
+    timeout: 请求超时时间（秒），默认 30
+    
+    配置示例：
+    gpt_sovits:
+        server_url: "http://127.0.0.1:9880"
+        refer_wav_path: "/path/to/reference.wav"
+        prompt_text: "参考音频的文本内容"
+        prompt_language: "zh"
+        text_language: "zh"
+        top_k: 15
+        top_p: 1.0
+        temperature: 1.0
+        speed: 1.0
+        timeout: 30
+    """
+
+    SLUG = "gpt-sovits"
+
+    def __init__(
+        self,
+        server_url,
+        text_lang="zh",
+        ref_audio_path=None,
+        prompt_text=None,
+        prompt_lang="zh",
+        aux_ref_audio_paths=None,
+        top_k=5,
+        top_p=1.0,
+        temperature=1.0,
+        text_split_method="cut5",
+        batch_size=1,
+        speed_factor=1.0,
+        seed=-1,
+        parallel_infer=True,
+        repetition_penalty=1.35,
+        timeout=30,
+        **args
+    ):
+        super(self.__class__, self).__init__()
+        self.server_url = server_url.rstrip("/")
+        self.text_lang = text_lang
+        self.ref_audio_path = ref_audio_path
+        self.prompt_text = prompt_text
+        self.prompt_lang = prompt_lang
+        self.aux_ref_audio_paths = aux_ref_audio_paths
+        self.top_k = top_k
+        self.top_p = top_p
+        self.temperature = temperature
+        self.text_split_method = text_split_method
+        self.batch_size = batch_size
+        self.speed_factor = speed_factor
+        self.seed = seed
+        self.parallel_infer = parallel_infer
+        self.repetition_penalty = repetition_penalty
+        self.timeout = timeout
+
+    @classmethod
+    def get_config(cls):
+        return config.get("gpt_sovits", {})
+    
+    @classmethod
+    def get_instance(cls):
+        profile = cls.get_config()
+        logger.info(f"GPT-SoVITS 读取到的配置: {profile}")
+        # 确保配置参数存在
+        if not profile.get("server_url"):
+            raise ValueError("GPT-SoVITS 配置缺少 server_url 参数")
+        instance = cls(**profile)
+        return instance
+
+    def get_speech(self, phrase):
+        """
+        调用 GPT-SoVITS API 进行语音合成
+        """
+        try:
+            logger.info(f"{self.SLUG} 开始合成语音，文本长度: {len(phrase)}")
+            
+            # 调用 GPT-SoVITS 客户端
+            result = GPTSoVITSClient.tts(
+                text=phrase,
+                server_url=self.server_url,
+                text_lang=self.text_lang,
+                ref_audio_path=self.ref_audio_path,
+                prompt_text=self.prompt_text,
+                prompt_lang=self.prompt_lang,
+                aux_ref_audio_paths=self.aux_ref_audio_paths,
+                top_k=self.top_k,
+                top_p=self.top_p,
+                temperature=self.temperature,
+                text_split_method=self.text_split_method,
+                batch_size=self.batch_size,
+                speed_factor=self.speed_factor,
+                seed=self.seed,
+                parallel_infer=self.parallel_infer,
+                repetition_penalty=self.repetition_penalty,
+                timeout=self.timeout
+            )
+            
+            if not result:
+                logger.error(f"{self.SLUG} 客户端返回空数据")
+                return None
+            
+            # 保存音频文件
+            tmpfile = utils.write_temp_file(result, ".wav")
+            logger.info(f"{self.SLUG} 语音合成成功，合成路径：{tmpfile}")
+            return tmpfile
+            
+        except requests.exceptions.ConnectionError as e:
+            logger.critical(
+                f"{self.SLUG} 无法连接到服务器 {self.server_url}",
+                stack_info=True
+            )
+            logger.critical("请检查：1) 服务器是否运行 2) IP地址是否正确 3) 防火墙设置")
+            return None
+        except requests.exceptions.Timeout as e:
+            logger.critical(
+                f"{self.SLUG} 请求超时（{self.timeout}秒）",
+                stack_info=True
+            )
+            logger.critical("建议：1) 增加 timeout 参数 2) 检查网络连接 3) 检查服务器性能")
+            return None
+        except Exception as e:
+            logger.critical(
+                f"{self.SLUG} 合成失败：{type(e).__name__}: {str(e)}",
+                stack_info=True
+            )
+            return None
 
 def get_engines():
     def get_subclasses(cls):

@@ -128,17 +128,17 @@ class LatencyMonitor:
         if not os.path.exists(self.report_dir):
             os.makedirs(self.report_dir)
             
-        # 延迟阈值（毫秒）
+        # 延迟阈值（毫秒）- 根据实际网络服务延迟调整
         self.thresholds = {
-            'wakeup': 300,      # 唤醒延迟阈值
-            'asr': 250,         # ASR延迟阈值
-            'nlu': 100,         # NLU延迟阈值
-            'skill': 500,       # 技能处理延迟阈值
-            'tts': 1000,        # TTS合成延迟阈值
-            'play': 200,        # 播放延迟阈值
-            'total': 2000,      # 总延迟阈值
-            'ws_latency': 50,   # WebSocket延迟阈值
-            'ws_jitter': 20     # WebSocket抖动阈值
+            'wakeup': 500,      # 唤醒延迟阈值（放宽到500ms）
+            'asr': 1500,        # ASR延迟阈值（网络语音识别服务，1.5秒合理）
+            'nlu': 800,         # NLU延迟阈值（网络NLU服务，800ms合理）
+            'skill': 3000,      # 技能处理延迟阈值（包含复杂逻辑+多次TTS，3秒合理）
+            'tts': 5000,        # TTS合成延迟阈值（Edge-TTS网络服务，长文本5秒内）
+            'play': 500,        # 播放延迟阈值（本地播放，放宽到500ms）
+            'total': 15000,     # 总延迟阈值（15秒内完成一次完整交互）
+            'ws_latency': 100,  # WebSocket延迟阈值（放宽到100ms）
+            'ws_jitter': 50     # WebSocket抖动阈值（放宽到50ms）
         }
         
         logger.info("全链路延迟监控器已初始化")

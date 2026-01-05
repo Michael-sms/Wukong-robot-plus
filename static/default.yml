@@ -101,7 +101,8 @@ lru_cache:
 # edge-tts       - 基于 Edge 的 TTS（推荐）
 # VITS           - 基于 VITS 的AI语音合成
 # volcengine-tts - 火山引擎语音合成
-tts_engine: edge-tts
+# gpt-sovits     - GPT-SoVITS 语音合成（角色语音克隆）
+tts_engine: gpt-sovits
 
 # 语音识别服务配置
 # 可选值：
@@ -217,6 +218,31 @@ volcengine-tts:
     token: ""
     cluster: ""
     voice_type: ""
+
+# GPT-SoVITS TTS服务
+# 需要部署 GPT-SoVITS 推理服务器
+# 项目地址：https://github.com/RVC-Boss/GPT-SoVITS
+gpt_sovits:
+    server_url: "http://192.168.1.103:9880"  # GPT-SoVITS 服务器地址
+    # 参考音频路径（必须是服务器端的路径，不是本地路径）
+    ref_audio_path: "C:/Users/Usotsuki_Kaze/Desktop/MyGO!!!!!/千早愛音/あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし.mp3"
+    # 参考音频对应的文本
+    prompt_text: "あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし"
+    # 参考音频的语言（zh: 中文, ja: 日语, en: 英语）
+    prompt_lang: "ja"
+    # 要合成的文本语言（zh: 中文, ja: 日语, en: 英语）
+    text_lang: "zh"
+    # 以下为可选参数
+    top_k: 5
+    top_p: 1.0
+    temperature: 1.0
+    text_split_method: "cut5"
+    batch_size: 1
+    speed_factor: 1.0
+    seed: -1
+    parallel_infer: true
+    repetition_penalty: 1.35
+    timeout: 30
 
 # 基于 VITS 的AI语音合成
 VITS:
