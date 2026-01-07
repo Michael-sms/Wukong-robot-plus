@@ -566,6 +566,12 @@ def switch_character_voice(self, character_name):
 
 ## 📝 更新日志
 
+### v1.1 (2026-01-07)
+- ✨ 新增 GPT-SoVITS 语音合成支持，支持 5-10 秒少样本克隆真实角色语音
+- 📝 完善 GPT-SoVITS 部署与配置说明文档
+- 📊 添加各 TTS 引擎（Edge-TTS, VITS, GPT-SoVITS）的技术对比与选型建议
+- 🔧 优化角色语音映射配置建议
+
 ### v1.0 (2026-01-01)
 - ✨ 实现基于声纹的角色语音切换
 - ✨ 支持 Edge-TTS 多音色

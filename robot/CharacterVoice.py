@@ -14,6 +14,11 @@ CHARACTER_VOICE_MAP = {
         "description": "温柔可爱的少女音"
     },
     
+    # "莉莉丝": {
+    #     "engine": "edge-tts",   
+    #     "voice": "zh-CN-XiaoyiNeural",  # 活泼女声
+    #     "description": "活泼开朗的少女音"
+    # },
     # VITS 模型示例（需要部署 VITS 服务）
     # "千早爱音": {
     #     "engine": "vits",
