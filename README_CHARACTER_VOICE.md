@@ -7,9 +7,10 @@
 ## ✨ 主要特性
 
 - ✅ 声纹识别自动切换语音
-- ✅ 支持多种TTS引擎（Edge-TTS、VITS、Bert-VITS2等）
+- ✅ 支持多种TTS引擎（Edge-TTS、VITS、Bert-VITS2、GPT-SoVITS等）
 - ✅ 灵活的角色配置系统
 - ✅ 语音测试和管理工具
+- ✅ 支持少样本语音克隆（GPT-SoVITS）
 
 ## 📁 新增文件
 
@@ -140,6 +141,21 @@ edge-tts --list-voices | grep zh-CN
 
 ## 🎨 推荐音色配置
 
+### GPT-SoVITS 角色语音（推荐）
+
+GPT-SoVITS 支持使用少量样本克隆真实角色语音，音质和相似度最高。
+
+| 特点 | 说明 |
+|-----|-----|
+| 样本需求 | 仅需 5-10 秒参考音频 |
+| 音质 | 接近真实角色声音 |
+| 多语言 | 支持中文、日语、英语 |
+| 部署 | 需要独立部署服务 |
+
+### Edge-TTS 音色（免费易用）
+
+Edge-TTS 是微软提供的免费 TTS 服务，虽然不是真正的角色音，但配置简单。
+
 ### 女性角色
 
 | 角色风格 | 推荐音色 | 音色代码 |
@@ -201,6 +217,84 @@ CHARACTER_VOICE_MAP = {
 用户C注册选择"绫波丽" → 听到平静音
 
 ## 🔧 高级配置
+
+### 使用 GPT-SoVITS 克隆角色语音（推荐）
+
+GPT-SoVITS 只需要少量音频样本（5-10秒）就能克隆真实的角色声音，是最接近原角色的方案。
+
+#### 1. 部署 GPT-SoVITS 服务
+
+```bash
+# 克隆项目
+git clone https://github.com/RVC-Boss/GPT-SoVITS.git
+cd GPT-SoVITS
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动推理服务（默认端口 9880）
+python api.py
+```
+
+#### 2. 准备参考音频
+
+从角色语音中提取一段清晰的音频（5-10秒），并记录对应的文本内容。
+
+**示例：**
+- 音频文件：`千早爱音_sample.mp3`
+- 对应文本：`あー、りっきーは知らないか〜。私、作文得意なんだよね。`
+
+#### 3. 配置 config.yml
+
+编辑 `~/.wukong/config.yml`：
+
+```yaml
+# 设置默认 TTS 引擎为 GPT-SoVITS
+tts_engine: gpt-sovits
+
+# GPT-SoVITS 配置
+gpt_sovits:
+    server_url: "http://127.0.0.1:9880"  # GPT-SoVITS 服务器地址
+    # 参考音频路径（服务器端路径）
+    ref_audio_path: "C:/path/to/千早爱音_sample.mp3"
+    # 参考音频对应的文本
+    prompt_text: "あー、りっきーは知らないか〜。私、作文得意なんだよね。"
+    # 参考音频的语言（zh: 中文, ja: 日语, en: 英语）
+    prompt_lang: "ja"
+    # 要合成的文本语言
+    text_lang: "zh"
+    # 可选参数
+    top_k: 5
+    top_p: 1.0
+    temperature: 1.0
+```
+
+#### 4. 配置角色语音映射
+
+编辑 `robot/CharacterVoice.py`：
+
+```python
+CHARACTER_VOICE_MAP = {
+    "千早爱音": {
+        "engine": "gpt-sovits",
+        "ref_audio_path": "C:/path/to/千早爱音_sample.mp3",
+        "prompt_text": "あー、りっきーは知らないか〜。私、作文得意なんだよね。",
+        "prompt_lang": "ja",
+        "text_lang": "zh",
+        "description": "千早爱音真实语音克隆"
+    },
+}
+```
+
+#### 5. 测试效果
+
+```bash
+# 注册声纹时选择"千早爱音"
+# 对机器人说："注册声纹"
+
+# 测试语音效果
+# 对机器人说："测试语音"
+```
 
 ### 使用 VITS 真角色语音
 
@@ -332,11 +426,51 @@ vim static/user_db.json
 
 Edge-TTS 是标准合成音，无法完全模拟角色。要真正的角色音需要：
 
-1. **使用 VITS** 训练角色模型
-2. **使用 Bert-VITS2** 高质量合成
-3. **使用 GPT-SoVITS** 少样本克隆
+1. **使用 GPT-SoVITS**（推荐）少样本克隆，仅需 5-10 秒音频
+2. **使用 VITS** 训练角色模型（需要大量数据和训练时间）
+3. **使用 Bert-VITS2** 高质量合成（需要训练）
 
 参考：[docs/CHARACTER_VOICE_GUIDE.md](docs/CHARACTER_VOICE_GUIDE.md)
+
+### Q6: GPT-SoVITS 如何获取参考音频？
+
+**方法1：从动漫/游戏中提取**
+```bash
+# 使用 ffmpeg 提取音频
+ffmpeg -i video.mp4 -ss 00:01:30 -t 10 -acodec copy output.mp3
+```
+
+**方法2：使用 UVR 分离人声**
+- 下载 Ultimate Vocal Remover (UVR)
+- 分离背景音乐，只保留人声
+- 选择清晰的 5-10 秒片段
+
+**注意事项：**
+- 音频要清晰，无背景噪音
+- 避免音乐和音效干扰
+- 尽量选择情绪平稳的语音
+- 记录准确的对应文本
+
+### Q7: GPT-SoVITS 支持多个角色吗？
+
+支持！为每个角色配置不同的参考音频：
+
+```python
+CHARACTER_VOICE_MAP = {
+    "千早爱音": {
+        "engine": "gpt-sovits",
+        "ref_audio_path": "/path/to/千早爱音.mp3",
+        "prompt_text": "参考文本1",
+        "prompt_lang": "ja"
+    },
+    "明日香": {
+        "engine": "gpt-sovits",
+        "ref_audio_path": "/path/to/明日香.mp3",
+        "prompt_text": "参考文本2",
+        "prompt_lang": "ja"
+    },
+}
+```
 
 ### Q4: 如何查看当前使用的音色？
 
@@ -423,9 +557,11 @@ def switch_character_voice(self, character_name):
 
 ## 🎓 学习资源
 
+- **GPT-SoVITS 官方**: https://github.com/RVC-Boss/GPT-SoVITS
 - **Edge-TTS 官方**: https://github.com/rany2/edge-tts
 - **VITS 项目**: https://github.com/jaywalnut310/vits
 - **Bert-VITS2**: https://github.com/fishaudio/Bert-VITS2
+- **UVR 人声分离**: https://github.com/Anjok07/ultimatevocalremovergui
 - **配置指南**: [docs/CHARACTER_VOICE_GUIDE.md](docs/CHARACTER_VOICE_GUIDE.md)
 
 ## 📝 更新日志

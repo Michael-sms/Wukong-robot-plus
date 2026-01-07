@@ -13,16 +13,6 @@ CHARACTER_VOICE_MAP = {
         "voice": "zh-CN-XiaoxiaoNeural",  # 温柔女声
         "description": "温柔可爱的少女音"
     },
-    # "明日香": {
-    #    "engine": "edge-tts", 
-    #   "voice": "zh-CN-XiaoyiNeural",  # 活泼女声
-    #    "description": "活泼傲娇的少女音"
-    # },
-    # "绫波丽": {
-    #     "engine": "edge-tts",
-    #     "voice": "zh-CN-XiaomengNeural",  # 平静女声
-    #     "description": "平静温和的少女音"
-    # },
     
     # VITS 模型示例（需要部署 VITS 服务）
     # "千早爱音": {
@@ -56,12 +46,14 @@ CHARACTER_VOICE_MAP = {
 
 # 默认语音配置（当角色未配置或未识别到用户时使用）
 DEFAULT_VOICE = {
-    "engine": "gpt-sovits",
-    "server_url": "http://192.168.1.103:9880",
-    "ref_audio_path": "C:/Users/Usotsuki_Kaze/Desktop/MyGO!!!!!/千早愛音/あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし.mp3",
-    "prompt_text": "あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし",
-    "prompt_lang": "ja",
-    "text_lang": "zh"
+    # "engine": "gpt-sovits",
+    # "server_url": "http://192.168.1.103:9880",
+    # "ref_audio_path": "C:/Users/Usotsuki_Kaze/Desktop/MyGO!!!!!/千早愛音/あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし.mp3",
+    # "prompt_text": "あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし",
+    # "prompt_lang": "ja",
+    # "text_lang": "zh"
+    "engine": "edge-tts",
+    "voice": "zh-CN-XiaoxiaoNeural",  # 温柔女声
 }
 
 # Edge-TTS 推荐音色列表（供用户选择）

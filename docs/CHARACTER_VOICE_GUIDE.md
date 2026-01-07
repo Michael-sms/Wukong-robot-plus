@@ -140,12 +140,49 @@ Bert-VITS2 是改进版的VITS，支持更好的韵律和情感表达。
 - https://github.com/fishaudio/Bert-VITS2
 - https://github.com/PlayVoice/vits_chinese
 
-### 方案3: 使用 GPT-SoVITS（少样本克隆）
+### 方案3: 使用 GPT-SoVITS（少样本克隆/推荐）
 
-GPT-SoVITS 只需要少量样本就能克隆声音。
+GPT-SoVITS 是目前效果最好的少样本语音克隆方案，只需要 5-10 秒的参考音频，就能合成非常真实的语音。
 
-**参考项目：**
-- https://github.com/RVC-Boss/GPT-SoVITS
+#### 1. 部署 GPT-SoVITS 服务
+
+需要单独部署 GPT-SoVITS 推理服务：
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/RVC-Boss/GPT-SoVITS.git
+cd GPT-SoVITS
+
+# 2. 安装依赖
+pip install -r requirements.txt
+
+# 3. 下载预训练模型（参考官方文档）
+
+# 4. 启动 API 服务
+python api.py
+# 服务默认运行在 http://127.0.0.1:9880
+```
+
+#### 2. 准备参考音频
+
+你需要准备一段角色的干声（无背景音乐）作为参考音频：
+- **格式**：MP3/WAV
+- **时长**：5-10 秒最佳
+- **内容**：语音清晰，情感丰富
+- **路径**：必须是 **GPT-SoVITS 服务所在机器** 的绝对路径
+
+#### 3. 配置 CharacterVoice.py
+
+```python
+"这里填角色名": {
+    "engine": "gpt-sovits",
+    "ref_audio_path": "C:\\Models\\Audio\\sample.wav",  # 参考音频绝对路径
+    "prompt_text": "这里是参考音频对应的文字内容",      # 参考音频的文本
+    "prompt_lang": "zh",                                # 参考音频语言 (zh/ja/en)
+    "text_lang": "zh",                                  # 合成目标语言
+    "description": "GPT-SoVITS 语音克隆"
+}
+```
 
 ### 方案4: 使用在线角色语音API
 
@@ -181,6 +218,16 @@ CHARACTER_VOICE_MAP = {
         "speaker_id": "paimon",
         "description": "Bert-VITS2 派蒙语音"
     },
+
+    # GPT-SoVITS 配置（推荐）
+    "千早爱音(真)": {
+        "engine": "gpt-sovits",
+        # 必须是运行 GPT-SoVITS 服务的机器上的绝对路径
+        "ref_audio_path": "D:/Models/GPT-SoVITS/ref_waves/soyo_01.wav",
+        "prompt_text": "あー、りっきーは知らないか〜。私、作文得意なんだよね。",
+        "prompt_lang": "ja",
+        "description": "GPT-SoVITS 语音克隆"
+    }
 }
 ```
 

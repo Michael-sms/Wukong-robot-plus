@@ -124,7 +124,7 @@ save(user_db)  # 同步到文件
 
 ## 4. 角色语音功能
 
-本模块实现了基于用户偏好的动态语音合成（TTS）切换，支持 Edge-TTS 等多种引擎。
+本模块实现了基于用户偏好的动态语音合成（TTS）切换，支持 **Edge-TTS**、**VITS**、**Bert-VITS2**、**GPT-SoVITS** 等多种引擎，其中 **GPT-SoVITS** 是目前效果最好的少样本语音克隆方案。
 
 ### 涉及文件与功能
 1. **`robot/CharacterVoice.py` (核心配置)**
@@ -157,6 +157,12 @@ if user:
         tts = EdgeTTS(voice=voice_cfg['voice'])
     elif voice_cfg['engine'] == 'vits':
         tts = VITS(server_url, speaker_id)
+    elif voice_cfg['engine'] == 'gpt-sovits':
+        tts = GPTSoVITS(
+            ref_audio_path=voice_cfg['ref_audio_path'],
+            prompt_text=voice_cfg['prompt_text'],
+            prompt_lang=voice_cfg['prompt_lang']
+        )
     
     current_user_context = user['context']  # 保存上下文
 tts.speak(reply)
@@ -166,8 +172,109 @@ tts.speak(reply)
 系统在 `Conversation.py` 中实现了 TTS 引擎的动态切换：
 1. **声纹识别触发**: 当 `identify_speaker()` 成功识别用户后，自动调用 `switch_character_voice()`
 2. **保存默认引擎**: 初始化时保存 `default_tts`，未识别到用户时可恢复默认语音
-3. **支持多引擎**: 目前完整支持 Edge-TTS，VITS/Bert-VITS2 预留接口
+3. **支持多引擎**: 完整支持 Edge-TTS、GPT-SoVITS，VITS/Bert-VITS2 预留接口
 4. **实时生效**: 切换后立即对当前会话的所有 TTS 输出生效
+
+### TTS 引擎技术对比
+
+| 引擎 | 优势 | 劣势 | 适用场景 | 样本需求 |
+|------|------|------|---------|----------|
+| **Edge-TTS** | 免费、稳定、无需部署 | 仅标准音色，不像真实角色 | 快速测试、低成本方案 | 无 |
+| **VITS** | 音质好、可训练真实角色 | 需大量数据训练（>1小时音频） | 有充足语料的角色克隆 | 高（>1小时） |
+| **Bert-VITS2** | 韵律自然、情感丰富 | 训练复杂、需GPU推理 | 高质量角色语音项目 | 高（>1小时） |
+| **GPT-SoVITS** | **少样本克隆**（5-10秒）、音质接近真人 | 需独立部署服务 | **推荐方案**：快速克隆角色语音 | **极低（5-10秒）** |
+
+### GPT-SoVITS 实现原理
+
+#### 核心技术
+- **模型架构**: 基于 GPT 的序列到序列语音合成模型，结合 SoVITS（Soft-VC VITS）技术
+- **少样本学习**: 使用 **参考音频（5-10秒）** 作为 prompt，通过注意力机制捕捉说话人的音色特征
+- **跨语言支持**: 支持中文、日文、英文的语音合成，且参考音频语言可与目标语言不同
+
+#### 工作流程
+```python
+# 1. 服务端接收请求
+request = {
+    "ref_audio_path": "/path/to/reference.wav",  # 参考音频（5-10秒干声）
+    "prompt_text": "参考音频对应的文字内容",      # 音频转录文本
+    "prompt_lang": "ja",                         # 参考音频语言
+    "text": "要合成的目标文本",                  # 待合成文本
+    "text_lang": "zh"                            # 目标语言
+}
+
+# 2. 模型推理
+ref_features = extract_speaker_embedding(ref_audio)  # 提取说话人特征
+mel_spectrogram = gpt_model.generate(
+    text=target_text,
+    speaker_embedding=ref_features  # 注入说话人信息
+)
+audio_output = sovits_vocoder.decode(mel_spectrogram)  # 生成波形
+
+# 3. 返回合成音频
+return audio_output  # WAV格式
+```
+
+#### 配置示例
+在 `robot/CharacterVoice.py` 中配置角色映射：
+```python
+CHARACTER_VOICE_MAP = {
+    "千早爱音": {
+        "engine": "gpt-sovits",
+        # 参考音频路径（必须是GPT-SoVITS服务器可访问的路径）
+        "ref_audio_path": "C:/Models/Audio/soyo_sample.wav",
+        # 参考音频的文本内容（需准确对应）
+        "prompt_text": "あー、りっきーは知らないか〜。私、作文得意なんだよね。",
+        # 参考音频的语言
+        "prompt_lang": "ja",
+        # 要合成的目标语言
+        "text_lang": "zh",
+        "description": "千早爱音真实语音克隆"
+    }
+}
+```
+
+#### 关键参数说明
+- **`ref_audio_path`**: 
+  - 必须是 GPT-SoVITS 服务所在机器的**绝对路径**
+  - 音频要求：干声（无背景音乐）、清晰、5-10秒
+  - 支持格式：WAV、MP3
+  
+- **`prompt_text`**: 
+  - 必须与参考音频内容**完全一致**（包括标点符号）
+  - 用于模型对齐音素和音频
+  
+- **`prompt_lang` / `text_lang`**: 
+  - 支持：`zh`（中文）、`ja`（日语）、`en`（英语）
+  - 可以不同（如用日语参考音频合成中文）
+
+#### 部署要求
+```bash
+# 1. 克隆并安装 GPT-SoVITS
+git clone https://github.com/RVC-Boss/GPT-SoVITS.git
+cd GPT-SoVITS
+pip install -r requirements.txt
+
+# 2. 下载预训练模型（参考官方文档）
+# 模型会自动下载到 GPT_SoVITS/pretrained_models/
+
+# 3. 启动 API 服务
+python api.py
+# 默认监听 http://127.0.0.1:9880
+```
+
+#### 在 config.yml 中配置服务地址
+```yaml
+# 设置默认 TTS 引擎
+tts_engine: gpt-sovits
+
+# GPT-SoVITS 服务配置
+gpt_sovits:
+    server_url: "http://127.0.0.1:9880"  # 服务器地址
+    ref_audio_path: "C:/path/to/reference.wav"
+    prompt_text: "参考音频对应的文本"
+    prompt_lang: "ja"
+    text_lang: "zh"
+```
 
 ---
 
