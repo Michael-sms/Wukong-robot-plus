@@ -35,6 +35,8 @@ temp/
     ↓
 [session_start] ← 创建会话追踪器
     ↓
+[wakeup_detected] ← 唤醒检测完成
+    ↓
 [asr_start] → ASR语音识别 → [asr_end]
     ↓
 [nlu_start] → NLU语义理解 → [nlu_end]
@@ -46,6 +48,7 @@ temp/
 [play_start] → 音频播放 → [play_end]
     ↓
 [response_end] ← 计算各阶段延迟，生成报告
+[session_end] ← 会话结束
 
 
         WebSocket通信
@@ -61,14 +64,17 @@ temp/
 
 | 阶段 | 阈值 | 说明 |
 |------|------|------|
-| ASR识别 | 250ms | 语音转文字 |
-| NLU理解 | 100ms | 语义解析 |
-| 技能处理 | 500ms | 插件执行 |
-| TTS合成 | 1000ms | 文字转语音 |
-| 音频播放 | 200ms | 播放启动 |
-| **总延迟** | **2000ms** | **端到端** |
-| WebSocket延迟 | 50ms | 网络通信 |
-| WebSocket抖动 | 20ms | 网络稳定性 |
+| 唤醒检测 | 500ms | 唤醒词检测完成 |
+| ASR识别 | 1500ms | 语音转文字（网络服务） |
+| NLU理解 | 800ms | 语义解析（网络服务） |
+| 技能处理 | 3000ms | 插件执行（含多次TTS调用） |
+| TTS合成 | 5000ms | 文字转语音（Edge-TTS网络服务） |
+| 音频播放 | 500ms | 播放启动（本地） |
+| **总延迟** | **15000ms** | **端到端完整交互** |
+| WebSocket延迟 | 100ms | 网络通信RTT |
+| WebSocket抖动 | 50ms | 网络稳定性（连续延迟波动） |
+
+> **注意**：以上阈值根据使用网络服务（腾讯云ASR、百度NLU、Edge-TTS）的实际场景设定。如使用本地模型，可相应调低阈值。
 
 ### 修改阈值
 
@@ -76,14 +82,15 @@ temp/
 
 ```python
 self.thresholds = {
-    'asr': 250,         # ASR延迟阈值（毫秒）
-    'nlu': 100,         # NLU延迟阈值
-    'skill': 500,       # 技能处理延迟阈值
-    'tts': 1000,        # TTS合成延迟阈值
-    'play': 200,        # 播放延迟阈值
-    'total': 2000,      # 总延迟阈值
-    'ws_latency': 50,   # WebSocket延迟阈值
-    'ws_jitter': 20     # WebSocket抖动阈值
+    'wakeup': 500,      # 唤醒延迟阈值（毫秒）
+    'asr': 1500,        # ASR延迟阈值（网络语音识别服务）
+    'nlu': 800,         # NLU延迟阈值（网络NLU服务）
+    'skill': 3000,      # 技能处理延迟阈值（包含复杂逻辑）
+    'tts': 5000,        # TTS合成延迟阈值（Edge-TTS网络服务）
+    'play': 500,        # 播放延迟阈值（本地播放）
+    'total': 15000,     # 总延迟阈值（15秒内完成交互）
+    'ws_latency': 100,  # WebSocket延迟阈值
+    'ws_jitter': 50     # WebSocket抖动阈值
 }
 ```
 
@@ -370,6 +377,21 @@ report_file = monitor.generate_report()
 ```
 
 ## 📝 更新日志
+
+### v1.1 (2026-01-09)
+- 🔧 新增唤醒检测延迟监控（wakeup阶段）
+- 🔧 调整延迟阈值以适配实际网络服务场景：
+  - 唤醒检测：500ms（新增）
+  - ASR识别：1500ms（网络服务）
+  - NLU理解：800ms（网络服务）
+  - 技能处理：3000ms（含多次TTS调用）
+  - TTS合成：5000ms（Edge-TTS长文本）
+  - 音频播放：500ms（本地播放）
+  - 总延迟：15000ms（完整交互）
+  - WebSocket延迟：100ms
+  - WebSocket抖动：50ms
+- 📝 完善文档说明，标注各阈值使用场景（网络/本地服务）
+- 📝 更新监控链路图，增加 wakeup_detected 和 session_end 节点
 
 ### v1.0 (2026-01-04)
 - ✨ 实现全链路延迟追踪（ASR→NLU→技能→TTS→播放）
