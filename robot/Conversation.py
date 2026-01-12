@@ -387,7 +387,7 @@ class Conversation(object):
                 # 使用 GPT-SoVITS 模型
                 self.tts = TTS.GPTSoVITS(
                     server_url=voice_config.get('server_url'),
-                    refer_wav_path=voice_config.get('refer_wav_path'),
+                    ref_audio_path=voice_config.get('ref_audio_path'),
                     prompt_text=voice_config.get('prompt_text'),
                     prompt_language=voice_config.get('prompt_language', 'zh'),
                     text_language=voice_config.get('text_language', 'zh'),
@@ -437,7 +437,7 @@ class Conversation(object):
             # 使用 GPT-SoVITS 默认配置
             self.tts = TTS.GPTSoVITS(
                 server_url=default_voice_config.get('server_url'),
-                refer_wav_path=default_voice_config.get('refer_wav_path'),
+                ref_audio_path=default_voice_config.get('ref_audio_path'),
                 prompt_text=default_voice_config.get('prompt_text'),
                 prompt_language=default_voice_config.get('prompt_language', 'zh'),
                 text_language=default_voice_config.get('text_language', 'zh'),

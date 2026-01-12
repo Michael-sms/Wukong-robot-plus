@@ -504,7 +504,7 @@ class GPTSoVITS(AbstractTTS):
     
     参数说明：
     server_url: 服务器地址，如 http://127.0.0.1:9880
-    refer_wav_path: 参考音频路径（可选，用于零样本克隆）
+    refer_audio_path: 参考音频路径（可选，用于零样本克隆）
     prompt_text: 参考音频对应的文本（可选）
     prompt_language: 参考音频语言，默认 "zh"
     text_language: 合成文本语言，默认 "zh"
@@ -518,7 +518,7 @@ class GPTSoVITS(AbstractTTS):
     配置示例：
     gpt_sovits:
         server_url: "http://127.0.0.1:9880"
-        refer_wav_path: "/path/to/reference.wav"
+        refer_audio_path: "/path/to/reference.wav"
         prompt_text: "参考音频的文本内容"
         prompt_language: "zh"
         text_language: "zh"

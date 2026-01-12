@@ -72,6 +72,7 @@ def tts(
     }
     
     # 如果提供了参考音频，添加相关参数
+    print(ref_audio_path)
     if ref_audio_path:
         payload["ref_audio_path"] = ref_audio_path
         if prompt_text:

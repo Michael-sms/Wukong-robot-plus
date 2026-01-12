@@ -52,7 +52,7 @@ CHARACTER_VOICE_MAP = {
 # 默认语音配置（当角色未配置或未识别到用户时使用）
 DEFAULT_VOICE = {
     # "engine": "gpt-sovits",
-    # "server_url": "http://192.168.1.103:9880",
+    # "server_url": "http://192.168.1.101:9880",
     # "ref_audio_path": "C:/Users/Usotsuki_Kaze/Desktop/MyGO!!!!!/千早愛音/あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし.mp3",
     # "prompt_text": "あー、りっきーは知らないか〜。私、作文得意なんだよね。今回も高評価だったし",
     # "prompt_lang": "ja",
