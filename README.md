@@ -1,245 +1,137 @@
-# wukong-robot
+# 重制版：你的声音，我的回应
 
-<p align="center">
-  <a href="https://wukong.hahack.com" target="_blank">
-    <img width="128" src="http://hahack-1253537070.file.myqcloud.com/images/wukong-icons/256_256.png" alt="wukong-robot">
-  </a>
-</p>
+本项目基于开源语音助手wukong-robot框架的深度重构，强化了**声纹识别**、**混合抗噪 VAD**、**低延迟全链路监控**与**动态角色语音合成**。目标是让机器人不仅“听懂”指令，还能“听出”你是谁，并用你偏爱的声音即时回应。
 
-<p align="center">
-  wukong-robot 是一个简单、灵活、优雅的中文语音对话机器人/智能音箱项目，目的是让中国的 Maker 和 Haker 们也能快速打造个性化的智能音箱。wukong-robot 还可能是第一个开源的脑机唤醒智能音箱。  
-</p>
-<p align="center">
-  截至 2023 年 3 月 31 日，wukong-robot 的安装设备数已超过 13,000 台，唤醒次数累积超过了 700,000 次。
-</p>
+## 📖 项目介绍
 
-<p align="center">
-  <a href="https://github.com/users/wzpan/projects/2/views/1"><img alt="wukong-project" src="https://img.shields.io/badge/project-wukong-informational.svg?style=flat-square"></a>
-  <a href="https://wukong.hahack.com/#/donate"><img alt="捐赠" src="https://img.shields.io/badge/%EF%BF%A5-donate-green.svg?style=flat-square"></a>
-  <a href="#"><img alt="Python3.7+" src="https://img.shields.io/badge/Python->=3.7-blue.svg?style=flat-square"></a>
-  <a href="https://hub.docker.com/r/wzpan/wukong-robot"><img alt="docker-pulls" src="https://img.shields.io/docker/pulls/wzpan/wukong-robot.svg?style=flat-square&colorB=success"></a>
-  <a href="https://github1s.com/wzpan/wukong-robot"><img alt="browse-code" src="https://img.shields.io/badge/browse-code-purple.svg?style=flat-square"></a>
-</p>
+**“你的声音，我的回应”** 是本重制项目的核心理念。
 
-<p align="center">
-  <a href="https://opencollective.com/wukong-robot/contribute/tier/8131-sponsor" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsors.svg?avatarHeight=36"></a>
-</p>
+传统的语音助手往往千篇一律，无法区分使用者。本项目通过集成 **ECAPA-TDNN 声纹识别模型** 与 **Faiss 向量检索**，赋予了机器人“识人”的能力。当不同用户唤醒机器人时，系统能毫秒级识别用户身份，并自动切换至该用户专属的 **角色语音（如动漫角色、特定音色）** 进行互动，真正实现了“千人千面”的沉浸式交互体验。
 
-## Table of Contents
+此外，针对开源语音助手常见的“听不清（抗噪差）”和“反应慢”问题，我们设计了 **混合式 VAD 静音检测** 策略与 **全链路延迟监控** 系统，确保在嘈杂环境下也能精准截断语音，且交互流畅无断音。
 
-* [特性](#特性)
-* [Demo](#demo)
-* [环境要求](#环境要求)
-* [安装](#安装)
-* [升级](#升级)
-* [运行](#运行)
-* [配置](#配置)
-* [技能插件](#插件)
-* [API接口](#api-接口)
-* [捐赠](#捐赠)
-* [贡献](#贡献)
-* [引用](#引用)
-* [联系](#联系)
-* [感谢](#感谢)
-* [FAQ](#faq)
-* [免责声明](#免责声明)
+**核心亮点速览**
+- 身份感知：ECAPA-TDNN 声纹 + Faiss 检索，毫秒级识别并绑定个性化回复音色。
+- 音质与情感：Edge-TTS 极速播报 + GPT-SoVITS 少样本克隆，支持动漫角色化交互。
+- 稳定低延迟：混合抗噪 VAD 精准截断，全链路延迟监控与抖动预警保障顺滑对话。
 
-## 特性
+## 🏗️ 系统架构
 
-<p align="center">
-  <img src="https://wzpan-1253537070.cos.ap-guangzhou.myqcloud.com/wukong/wukong-robot-3.3.0.png" alt="wukong-robot">
-</p>
+系统采用分层架构，自下而上覆盖硬件驱动、核心算法、业务逻辑与应用交互。
 
-* 模块化。功能插件、语音识别、语音合成、对话机器人都做到了高度模块化，第三方插件单独维护，方便继承和开发自己的插件。
-* 中文支持。集成百度、科大讯飞、阿里、腾讯、OpenAI Whisper、Apple、微软Edge、VITS声音克隆TTS 等多家中文语音识别和语音合成技术，且可以继续扩展。
-* 对话机器人支持。支持基于 [AnyQ](https://wukong.hahack.com/#/anyq) 的本地对话机器人，并支持接入图灵机器人、ChatGPT 等在线对话机器人。
-* 全局监听，离线唤醒。支持 [Porcupine](https://github.com/Picovoice/porcupine) 和 [snowboy](https://github.com/Kitt-AI/snowboy) 两套离线语音指令唤醒引擎，并支持 Muse [脑机唤醒](https://wukong.hahack.com/#/bci) 以及行空板摇一摇唤醒等其他唤醒方式。
-* 灵活可配置。支持定制机器人名字，支持选择语音识别和合成的插件。
-* 智能家居。支持和 [小爱音箱](https://wukong.hahack.com/#/linkage)、[Siri](https://wukong.hahack.com/#/linkage)、mqtt、[HomeAssistant](https://wukong.hahack.com/#/smarthome) 等智能家居协议联动，支持语音控制智能家电。
-* 后台配套支持。提供配套后台，可实现远程操控、修改配置和日志查看等功能。
-* 开放API。可利用后端开放的API，实现更丰富的功能。
-* 安装简单，支持更多平台。相比 dingdang-robot ，舍弃了 PocketSphinx 的离线唤醒方案，安装变得更加简单，代码量更少，更易于维护并且能在 Mac 以及更多 Linux 系统中运行。
+- **核心算法层**：腾讯云 ASR、百度 UNIT NLU、Edge-TTS / GPT-SoVITS 合成、ECAPA-TDNN 声纹识别。
+- **数据流**：语音唤醒 -> VAD 采集 -> ASR 识别 -> 声纹/意图并行 -> 技能分发 -> 动态 TTS -> 播放。
 
-wukong-robot 的功能还在不断更新迭代中，详见 [更新说明](https://github.com/wzpan/wukong-robot/wiki/update-notes) 。
+![系统架构图](docs/系统设计图.png)
 
-wukong-robot 的工作模式：
+## 📂 项目目录结构
 
-<p align="center">
-  <img src="https://wzpan-1253537070.cos.ap-guangzhou.myqcloud.com/wukong/wukong-robot-workflow.png" alt="wukong-robot 的工作模式">
-</p>
-
-wukong-robot 被唤醒后，用户的语音指令先经过 ASR 引擎进行 ASR 识别成文本，然后对识别到的文本进行 NLU 解析，再将解析结果进行技能匹配，交给适合处理该指令的技能插件去处理。插件处理完成后，得到的结果再交给 TTS 引擎合成成语音，播放给用户。
-
-虽然一次交互可能包含多次网络请求，不过带来的好处是：每一个环节都可以被修改和定制。而且我认为，到了 5G 时代，音箱的响应速度将不再成为体验问题。可定制和个性化才是未来的主流，而届时 wukong-robot 将会是更好的选择！
-
-## Demo
-
-<p align="center">
-  <img src="https://wzpan-1253537070.cos.ap-guangzhou.myqcloud.com/wukong/user-demo.jpg" alt="demo">
-</p>
-
-* Demo视频：
-  - [wukong-robot + ChatGPT 实现支持流式对话的智能音箱（一分半钟）](https://www.bilibili.com/video/BV1Bh411g7t2)
-  - [粉丝向定制版，演示对话+音乐+开放API+智能家居（五分钟）](https://www.bilibili.com/video/av50685517/)
-  - [使用脑机唤醒 wukong-robot](https://www.bilibili.com/video/av76739580/)
-  - [Google AIY Voice Kit + wukong-robot](https://www.bilibili.com/video/av81173082/)
-  - [Siri 联动 wukong-robot + ChatGPT](https://www.bilibili.com/video/BV1yY4y1y7oW)
-  - [小爱同学联动 wukong-robot](https://www.bilibili.com/video/BV1eg4y1b75Y)
-  - [教程：基于树莓派&wukong-robot&VITS的AI泠鸢开源智能音箱的初步实现（by @二维环状无限深势阱）](https://www.bilibili.com/video/BV1Sc411K7dv)
-  - [教程：实现一个虚拟管家：贾维斯(by @Echo）](https://zhuanlan.zhihu.com/p/655865035)
-* 后台管理端 Demo
-  - 体验地址：https://bot.hahack.com  （体验用户名：wukong；体验密码：wukong@2019）
-
-## 环境要求 ##
-
-### Python 版本 ###
-
-wukong-robot 只支持 Python >= 3.7 且 < 3.10 ，不支持 Python 2.x 。
-
-### 设备要求 ###
-
-wukong-robot 支持运行在以下的设备和系统中：
-
-* Intel Chip Mac (不支持 M1 芯片)
-* 64bit Ubuntu（12.04 and 14.04）
-* 全系列的树莓派（Raspbian 系统）
-* Pine 64 with Debian Jessie 8.5（3.10.102）
-* Intel Edison with Ubilinux （Debian Wheezy 7.8）
-* 装有 WSL（Windows Subsystem for Linux） 的 Windows
-
-## 安装 ##
-
-见 [wukong-robot 安装教程](https://wukong.hahack.com/#/install) 。
-
-## 升级
-
-``` bash
-python3 wukong.py update
-```
-
-如果提示升级失败，可以尝试在 wukong-robot 的根目录手动执行以下命令，看看问题出在哪。
-
-``` sh
-git pull
-pip3 install -r requirements.txt
-```
-
-## 运行 ##
-
-``` bash
-python3 wukong.py
-```
-
-建议在 [tmux](http://blog.jobbole.com/87278/) 或 supervisor 中执行。
-
-第一次启动时将提示你是否要到用户目录下创建一个配置文件，输入 `y` 即可。
-
-然后通过唤醒词 “snowboy” 唤醒 wukong-robot 进行交互（该唤醒词可自定义）。
-
-此外，wukong-robot 默认在运行期间还会启动一个后台管理端，提供了远程对话、查看修改配置、查看 log 等能力。
-
-- 默认地址：http://localhost:5001
-- 默认账户名：wukong
-- 默认密码：wukong@2019
-
-建议正式使用时修改用户名和密码，以免泄漏隐私。
-
-## 配置 ##
-
-参考[配置文件的注释](https://github.com/wzpan/wukong-robot/blob/master/static/default.yml)进行配置即可。注意不建议直接修改 default.yml 里的内容，否则会给后续通过 `git pull` 更新带来麻烦。你应该拷贝一份放到 `$HOME/.wukong/config.yml` 中，或者在运行的时候按照提示让 wukong-robot 为你完成这件事。
-
-> tips：不论使用哪个厂商的API，都建议注册并填上自己注册的应用信息，而不要用默认的配置。这是因为这些API都有使用频率和并发数限制，过多人同时使用会影响服务质量。
-
-## 技能插件 ##
-
-* [官方插件列表](https://wukong.hahack.com/#/official)
-* [用户贡献插件](https://wukong.hahack.com/#/contrib)
-
-## API 接口 ##
-
-wukong-robot 的后台接口是开放 Web API 的，可以使用 Restful 方式调用，见 [后台API](https://wukong.hahack.com/#/api)。
-
-## 捐赠
-
-您的捐赠将鼓励我继续完善 wukong-robot。
-
-* 对于个人用户，可以使用支付宝或者微信进行捐赠，单笔超过 100 元的捐赠者，您的 ID 将可以出现在 wukong-robot 后台管理端的捐赠页面中。
-
- 
-| 支付宝 | 微信支付 |
-| ------ | --------- |
-| <img src="http://hahack.com/images/misc/alipay.png" height="248px" width="164px" title="支付宝" style="display:inherit;"/> | <img src="http://hahack.com/images/misc/wechatpay.jpeg" height="248px" width="164px" title="微信支付" style="display:inherit;"/> |
-
-如果以上的图裂了，可以下载图片（[支付宝](http://hahack.com/images/misc/alipay.png) | [微信](http://hahack.com/images/misc/wechatpay.jpeg)）到本地进行扫描。
-
-* 对于企业用户，建议[成为这个项目的 backer](https://opencollective.com/wukong-robot/contribute/tier/8131-sponsor)，您将可以把一个带链接的 logo 放在 wukong-robot 后台管理端的首页、捐赠页面以及 Github 项目首页中。
-
-<p>
-  <a href="https://opencollective.com/wukong-robot/sponsor/0/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/1/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/2/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/3/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/4/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/5/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/6/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/7/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/8/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/9/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/9/avatar.svg"></a>
-</p>
-
-## 贡献
-
-* 喜欢本项目请先打一颗星；
-* 提 bug 请到 [issue 页面](https://github.com/wzpan/wukong-robot/issues)；
-* 要贡献代码，欢迎 fork 之后再提 pull request；
-* 插件请提交到 [wukong-contrib](https://github.com/wzpan/wukong-contrib) ；
-
-
-## 引用
-
-如果使用本项目的代码或插件，请引用本项目。
+主要目录结构如下：
 
 ```
-@misc{wukong-robot,
-  author = {潘伟洲},
-  title = {wukong-robot，一个简单、灵活、优雅的中文语音对话机器人/智能音箱项目},
-  year = {2019},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/wzpan/wukong-robot}},
-}
+wukong-robot/
+├── wukong.py                # 项目启动入口
+├── robot/                   # 核心逻辑库
+│   ├── CharacterVoice.py    # 角色语音配置管理
+│   ├── LatencyMonitor.py    # 全链路延迟监控
+│   ├── VAD.py               # 混合 VAD 静音检测
+│   ├── sdk/                 # 第三方 SDK 及声纹模型
+│   └── ...
+├── plugins/                 # 技能插件
+│   ├── RegisterVoice.py     # 声纹注册插件
+│   ├── VerifyVoice.py       # 声纹验证与角色切换
+│   ├── ListUser.py          # 列出当前已注册用户
+|   ├── DeleteUser.py        # 删除用户
+│   └── ...
+├── docker/                  # Docker 构建文件
+├── docs/                    # 项目文档
+├── static/                  # 静态资源与配置文件
+│   ├── user_db.json         # 用户画像数据库
+│   └── ...
+├── tools/                   # 辅助工具
+│   ├── character_voice_config.py # 角色语音配置工具
+│   ├── user_manager.py      # 用户管理工具
+│   └── ...
+└── requirements.txt         # 项目依赖列表
 ```
 
+## ⚙️ 依赖安装
 
-## 联系
+本项目基于 Python 3.7+ 环境。
 
-* wukong-robot 的主要开发者是 [潘伟洲](http://hahack.com) 。
-* QQ 频道（推荐）：
+1. **基础环境配置**
+   
+   先按原项目官方指引完成系统依赖（`pyaudio`, `sox`, `ffmpeg` 等）：
+   👉 **[安装配置说明](https://wukong.hahack.com/#/install)**
 
-使用 QQ 扫码加入：
+2. **Python 依赖安装**
 
-![](https://wzpan-1253537070.cos.ap-guangzhou.myqcloud.com/misc/wukong-guild-qrcode-256.png)
+   完成基础环境后，安装重制版所需的 Python 库（含 `edge-tts`, `funasr`, `speechbrain` 等）：
 
-* QQ 群：580447290（人数将满，为控制人数，需付费20元入群。微信或支付宝支付后，申请入群时贴上转账单号即可。**群收入的前一万元已无偿捐赠给[壹基金等公益项目](https://hahack-1253537070.cos.ap-chengdu.myqcloud.com/images/donate.png)**）。
+   ```bash
+   pip3 install -r requirements.txt
+   #或者是用uv管理环境
+   uv sync
+   ```
 
-| 支付宝 | 微信支付 |
-| ------ | --------- |
-| <img src="http://hahack.com/images/misc/alipay.png" height="248px" width="164px" title="支付宝" style="display:inherit;"/> | <img src="http://hahack.com/images/misc/wechatpay.jpeg" height="248px" width="164px" title="微信支付" style="display:inherit;"/> |
+## ✨ 项目特色
 
-如果以上的图裂了，可以下载图片（[支付宝](http://hahack.com/images/misc/alipay.png) | [微信](http://hahack.com/images/misc/wechatpay.jpeg)）到本地进行扫描。
+### 1. 🎤 声纹识别与用户注册
+机器人不再是冷冰冰的机器，它能记住你的声音。
+- **功能**：通过 `RegisterVoice` 插件，引导用户录入声纹并选择喜欢的角色（如“千早爱音”）。
+- **技术**：基于 `ECAPA-TDNN` 提取 192 维声纹特征，利用 `Faiss` 进行向量存储与检索。
 
-## 感谢
+### 2. 🎭 动态角色语音切换
+根据对话人不同，自动切换回复音色。
+- **体验**：如果是“主人”唤醒，它也许会用温柔的二次元女声回应；如果是陌生人，则使用标准助手音。
+- **引擎**：支持 `Edge-TTS`（轻量在线）与 `GPT-SoVITS`（高质量本地克隆）。
 
-* 悟空的前身是 [dingdang-robot](https://github.com/dingdang-robot/dingdang-robot) 项目和 [jasper-client](https://github.com/jasperproject/jasper-client) 项目。感谢 [Shubhro Saha](http://www.shubhro.com/), [Charles Marsh](http://www.crmarsh.com/) and [Jan Holthuis](http://homepage.ruhr-uni-bochum.de/Jan.Holthuis/) 在 Jasper 项目上做出的优秀贡献；
-* 感谢三咲智子提供了备选的后台管理端 Demo 体验地址。
-* 感谢 aliciacai 贡献的 wukong-robot 图标。
-* 感谢所有为[本项目](https://github.com/wzpan/wukong-robot/graphs/contributors)、 [wukong-contrib](https://github.com/wzpan/wukong-contrib/graphs/contributors) 项目以及[dingdang-robot](https://github.com/dingdang-robot/dingdang-robot/graphs/contributors) 项目做出过贡献的人！
+### 3. 🔇 混合式强抗噪 VAD
+解决了传统 VAD 在噪杂环境下截断困难的痛点。
+- **原理**：结合 **能量阈值 (RMS)** 与 **WebRTC VAD** 双重校验，实现“说话即录，停顿即止”，有效过滤风扇、键盘等背景噪音。
 
-## Star 历史
+### 4. ⚡ 全链路延迟监控
+实时追踪语音交互的每一环耗时，拒绝卡顿。
+- **监控点**：覆盖 唤醒 -> ASR -> NLU -> 技能处理 -> TTS -> 播放 全流程。
+- **告警**：自动检测 WebSocket 抖动，生成详细的延迟分析报告 (`temp/latency_reports/`)。
 
-[![Star History Chart](https://api.star-history.com/svg?repos=wzpan/wukong-robot&type=Date)](https://star-history.com/#wzpan/wukong-robot&Date)
+## 🚀 项目如何运行
 
-## 免责声明
+1. 确保配置文件 `static/default.yml` (或 `~/.wukong/config.yml`) 已正确配置 ASR、NLU 等账号信息。
 
-* wukong-robot 只用作个人学习研究，如因使用 wukong-robot 导致任何损失，本人概不负责。
-* 本开源项目与腾讯叮当助手及优必选悟空项目没有任何关系。
+2. 在项目根目录下运行：
+
+   ```bash
+   python3 wukong.py
+   ```
+
+3. 首次启动建议先进行声纹注册：
+   - 唤醒机器人（默认唤醒词“孙悟空”或“芝麻开门”）。
+   - 说：“**注册声纹**”。
+   - 按照语音提示录入名字、喜欢的角色名。
+
+## 📝 示例结果
+
+**场景：用户声纹注册与识别**
+
+> **用户(陌生人)**：孙悟空。
+> **机器人**：我在。
+> **用户**：注册声纹。
+> **机器人**：好的，请告诉我您的名字。
+> **用户**：我是张三。
+> **机器人**：收到，张三。请告诉我您喜欢的角色名称，例如“千早爱音”。
+> **用户**：千早爱音。
+> **机器人**：好的。请在听到滴声后，朗读以下内容......（录音中）......注册成功！
+
+**场景：个性化回复**
+
+> **用户(张三)**：孙悟空。
+> **机器人(识别出张三，切换为千早爱音音色)**：是的，Master，有什么可以帮您？
+> **用户**：唱首歌吧。
+> **机器人(保持角色音色)**：好的，为您播放本地音乐。
+
+## 🙏 致谢
+
+本项目是在 **[wukong-robot](https://github.com/wzpan/wukong-robot)** (Author: [wzpan](https://github.com/wzpan)) 的基础上进行的二次开发与重制。
+
+衷心感谢原作者构建了如此优秀、灵活且易于扩展的开源语音对话机器人框架，为本项目的重制与创新提供了坚实的基础。
