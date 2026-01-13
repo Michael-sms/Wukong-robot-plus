@@ -22,7 +22,7 @@
 - **核心算法层**：腾讯云 ASR、百度 UNIT NLU、Edge-TTS / GPT-SoVITS 合成、ECAPA-TDNN 声纹识别。
 - **数据流**：语音唤醒 -> VAD 采集 -> ASR 识别 -> 声纹/意图并行 -> 技能分发 -> 动态 TTS -> 播放。
 
-![系统架构图](docx/系统架构图.png)
+![系统架构图](docs/系统设计图.png)
 
 ## 📂 项目目录结构
 
@@ -40,7 +40,8 @@ wukong-robot/
 ├── plugins/                 # 技能插件
 │   ├── RegisterVoice.py     # 声纹注册插件
 │   ├── VerifyVoice.py       # 声纹验证与角色切换
-│   ├── LocalPlayer.py       # 本地播放器
+│   ├── ListUser.py          # 列出当前已注册用户
+|   ├── DeleteUser.py        # 删除用户
 │   └── ...
 ├── docker/                  # Docker 构建文件
 ├── docs/                    # 项目文档
@@ -69,6 +70,8 @@ wukong-robot/
 
    ```bash
    pip3 install -r requirements.txt
+   #或者是用uv管理环境
+   uv sync
    ```
 
 ## ✨ 项目特色
