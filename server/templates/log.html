@@ -1,40 +1,6 @@
 {% extends "layout.html" %}
 {% block body %}
-<link rel="stylesheet" href="{{static_url('starter-template.css')}}" crossorigin="anonymous">
-
-<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-  <a class="navbar-brand" href="/">wukong-robot</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-    <ul class="navbar-nav mr-auto">
-      <li class="nav-item">
-        <a class="nav-link" href="/">会话</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/configpage">配置</a>
-      </li>
-      <li class="nav-item active">
-        <a class="nav-link" href="/logpage">日志</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/qa">QA集</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/api">API</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/donate">捐赠</a>
-      </li>
-    </ul>
-    <div class="form-inline my-2 my-lg-0">
-      <a class="btn btn-outline-success my-2 my-sm-0" href="https://wukong.hahack.com" target="_blank">文档</a>
-    </div>
-  </div>
-</nav>
-
-<div class="container log">
+<div class="container log pt-5 mt-4">
   <div class="alert alert-info" role="alert">
     <i class="fas fa-bell"></i> 日志不会自动刷新，要查看最新日志，请点击【刷新日志】按钮。
   </div>

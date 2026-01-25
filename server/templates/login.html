@@ -1,20 +1,32 @@
 {% extends "layout.html" %}
+{% block navbar %}
+{% end %}
 {% block body %}
 <link href="{{static_url('signin.css')}}" rel="stylesheet">
-  <div class="container">
-  <form action="/login" class="form-signin" method=post>
-    {% module xsrf_form_html() %}
-    <center>
-      <h1 class="h3 mb-3 font-weight-normal">Please login</h1>
-      <label for="username" class="sr-only">User Name</label>
-      <input type="text" name="username" class="form-control" placeholder="User Name" required autofocus>
-      <label for="password" class="sr-only">Password</label>
-      <input type="password" name="password" class="form-control" placeholder="Password" required>
-      <p><input class="btn btn-lg btn-primary btn-block" type=submit value=Login></p>
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+  <div class="card shadow border-0 p-4" style="max-width: 400px; width: 100%; border-radius: 20px;">
+    <div class="text-center mb-4">
+      <img src="./static/robot.png" width="80" alt="robot">
+      <h1 class="h3 mt-3 font-weight-bold">wukong-robot</h1>
+      <p class="text-muted">请登录以管理您的机器人</p>
+    </div>
+    <form action="/login" class="form-signin" method="post">
+      {% module xsrf_form_html() %}
+      <div class="form-group">
+        <label for="username">用户名</label>
+        <input type="text" name="username" class="form-control form-control-lg" placeholder="Username" required autofocus>
+      </div>
+      <div class="form-group">
+        <label for="password">密码</label>
+        <input type="password" name="password" class="form-control form-control-lg" placeholder="Password" required>
+      </div>
+      <button class="btn btn-lg btn-primary btn-block mt-4" type="submit">登录</button>
       {% if error %}
-      <p style="color:#ff0000">{{ error }}</p>
+      <div class="alert alert-danger mt-3 py-2 text-center" role="alert">
+        {{ error }}
+      </div>
       {% end %}
-    </center>
-  </form>
+    </form>
   </div>
+</div>
 {% end %}

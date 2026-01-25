@@ -368,8 +368,12 @@ class DonateHandler(BaseHandler):
         r = requests.get(
             "https://raw.githubusercontent.com/wzpan/wukong-contrib/master/docs/donate.md"
         )
+        text = r.text.replace(
+            "images/",
+            "https://raw.githubusercontent.com/wzpan/wukong-contrib/master/docs/images/",
+        )
         content = markdown.markdown(
-            r.text,
+            text,
             extensions=["codehilite", "tables", "fenced_code", "meta", "nl2br", "toc"],
         )
         self.render("donate.html", content=content)
@@ -426,8 +430,12 @@ class APIHandler(BaseHandler):
             r = requests.get(
                 "https://raw.githubusercontent.com/wzpan/wukong-contrib/master/docs/api.md"
             )
+            text = r.text.replace(
+                "images/",
+                "https://raw.githubusercontent.com/wzpan/wukong-contrib/master/docs/images/",
+            )
             content = markdown.markdown(
-                r.text,
+                text,
                 extensions=[
                     "codehilite",
                     "tables",

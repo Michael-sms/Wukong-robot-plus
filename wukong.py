@@ -34,7 +34,7 @@ class Wukong(object):
         print(
             """
 ********************************************************
-*          aiyin-robot - 中文语音对话机器人           *
+*          wukong-robot - 中文语音对话机器人           *
 *               当前版本号:  {}                      *
 ********************************************************
 
@@ -98,10 +98,10 @@ class Wukong(object):
     def help(self):
         print(
             """=====================================================================================
-    python3 aiyin.py [命令]
+    python3 wukong.py [命令]
     可选命令：
       md5                      - 用于计算字符串的 md5 值，常用于密码设置
-      update                   - 手动更新 aiyin-robot
+      update                   - 手动更新 wukong-robot
       upload [thredNum]        - 手动上传 QA 集语料，重建 solr 索引。
                                  threadNum 表示上传时开启的线程数（可选。默认值为 10）
       profiling                - 运行过程中打印耗时数据
@@ -117,14 +117,14 @@ class Wukong(object):
 
     def update(self):
         """
-        更新 aiyin-robot
+        更新 wukong-robot
         """
         updater = Updater()
         return updater.update()
 
     def fetch(self):
         """
-        检测 aiyin-robot 的更新
+        检测 wukong-robot 的更新
         """
         updater = Updater()
         updater.fetch()
@@ -153,7 +153,7 @@ class Wukong(object):
 
     def restart(self):
         """
-        重启 aiyin-robot
+        重启 wukong-robot
         """
         logger.critical("程序重启...")
         try:

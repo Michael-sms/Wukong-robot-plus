@@ -1,53 +1,84 @@
 {% extends "layout.html" %}
 {% autoescape None %}
 {% block body %}
-<link rel="stylesheet" href="{{static_url('starter-template.css')}}" crossorigin="anonymous">
 <link rel="stylesheet" href="{{static_url('bubble.css')}}" crossorigin="anonymous">
 <link rel="stylesheet" href="{{static_url('progressjs.min.css')}}" crossorigin="anonymous">
 <link rel="stylesheet" href="{{static_url('default.min.css')}}" crossorigin="anonymous">
 <link rel="stylesheet" href="{{static_url('monokai-sublime.css')}}" crossorigin="anonymous">
-<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-  <a class="navbar-brand" href="/">wukong-robot</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-    <ul class="navbar-nav mr-auto">
-      <li class="nav-item active">
-        <a class="nav-link" href="/">会话</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/configpage">配置</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/logpage">日志</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/qa">QA集</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/api">API</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/donate">捐赠</a>
-      </li>
-    </ul>
-    <div class="form-inline my-2 my-lg-0">
-      <a class="btn btn-outline-success my-2 my-sm-0" href="https://wukong.hahack.com" target="_blank">文档</a>
-    </div>
-  </div>
-</nav>
 
-<div class="jumbotron">
-  <h1 class="display-4"><image src="./static/robot.png" width=128px attr="wukong-robot"/> wukong-robot</h1>
-  <p class="lead">wukong-robot 是一个简单灵活的中文语音对话机器人。</p>
-  <hr class="my-4">
-  <p><i class="fas fa-info-circle"></i> 本站点是 wukong-robot 的后台管理端，仅供远程交互，不支持离线唤醒。</p>
-  {% if notices %}
-    {% for notice in notices %}
-      <p><i class="fas fa-bell"></i> {{ linkify(notice) }}</p>
+<style>
+  .navbar-nav {
+    list-style-type: none !important;
+  }
+  .navbar-nav li {
+    list-style: none !important;
+  }
+  .hero-section {
+    padding: 30px 0 15px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    margin-bottom: 15px;
+    text-align: center;
+    border-radius: 0 0 30px 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .hero-section h1 {
+    font-weight: 800;
+    font-size: 2rem;
+    margin-bottom: 0.2rem;
+  }
+  .hero-section .lead {
+    font-size: 1rem;
+    margin-bottom: 5px;
+  }
+  .history-container {
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 15px;
+    height: 350px; 
+    overflow-y: auto;
+  }
+  .query-form {
+    background: white;
+    padding: 12px 18px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 15px;
+  }
+  .sponsors {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+  .sponsor-logo {
+    height: 35px;
+    margin: 4px;
+  }
+  .alert-update {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+  }
+</style>
+
+<div class="hero-section">
+  <div class="container">
+    <h1 class="display-4"><img src="./static/robot.png" width="80px" alt="wukong-robot"/> wukong-robot</h1>
+    <p class="lead">简单灵活的中文语音对话机器人</p>
+    <p class="info-text"><i class="fas fa-info-circle mr-1"></i> 本站点是 wukong-robot 的后台管理端，提供远程交互功能</p>
+    {% if notices %}
+      <div class="mt-3">
+      {% for notice in notices %}
+        <div class="badge badge-light p-2 mb-2" style="font-weight: 400; font-size: 0.9rem;">
+          <i class="fas fa-bell mr-1"></i> {{ linkify(notice) }}
+        </div>
+      {% end %}
+      </div>
     {% end %}
-  {% end %}
+  </div>
 </div>
 
 <div class="container">
@@ -98,43 +129,47 @@
 </div>
 
 <div class="container" id="container">
-  <div class="history">    
-  </div><!-- <div class="history"> -->
+  <div class="history-container shadow-sm border">
+    <div class="history"></div>
+  </div>
 
-  <div class="query-form">
-    <center>
-      <form class="form-row" action="#">
-        <label for="query" class="col-sm-2 col-form-label col-form-label-lg">说句话：</label>
-        <div class="col-7">
-          <input type="text" class="form-control" name="query" id="query" placeholder="{{suggestion}}" required autofocus>    </div>
-        &nbsp;
-        <button type="submit" class="btn btn-primary mb-2 CHAT"><i class="fas fa-comment"></i> 发送</button>
+  <div class="query-form border">
+      <form class="form-row align-items-center" action="#">
+        <div class="col-sm-2 text-right d-none d-sm-block">
+          <label for="query" class="col-form-label font-weight-bold">输入指令：</label>
+        </div>
+        <div class="col-sm-8 col-9">
+          <input type="text" class="form-control form-control-lg" name="query" id="query" placeholder="{{suggestion}}" required autofocus>
+        </div>
+        <div class="col-sm-2 col-3">
+          <button type="submit" class="btn btn-primary btn-block CHAT shadow-sm"><i class="fas fa-paper-plane d-sm-none"></i><span class="d-none d-sm-inline"> 发送</span></button>
+        </div>
       </form>
-    </center>
-  </div><!-- <div class="query-form"> -->
+  </div>
 
 
   <hr class="divider">
 
-  <div class="sponsors">
-        <h2 class="featurette-heading">赞助商</h2>
-        <p class="lead">感谢以下企业/组织对本项目的赞助：</p>
-      <p align="center">
-  <a href="https://opencollective.com/wukong-robot/sponsor/0/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/1/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/2/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/3/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/4/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/5/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/6/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/7/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/8/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/wukong-robot/sponsor/9/website" target="_blank"><img src="https://opencollective.com/wukong-robot/sponsor/9/avatar.svg"></a>
-      </p>
-      <blockquote>
-        <p class="text-muted quote">欢迎<a href="https://opencollective.com/wukong-robot/contribute/tier/8131-sponsor" target="_blank">成为这个项目的赞助商（sponsor）</a>，您将可以把一个带链接的 logo 放在 wukong-robot 后台管理端的首页、捐赠页面以及 Github 项目首页中。</p>
-      </blockquote>
+  <div class="sponsors shadow-sm border">
+    <h2 class="h3 font-weight-bold mb-4">赞助商</h2>
+    <p class="text-muted mb-4">感谢以下企业与组织对本项目的支持</p>
+    <div class="d-flex flex-wrap justify-content-center align-items-center">
+      {% for i in range(10) %}
+      <a href="https://opencollective.com/wukong-robot/sponsor/{{ i }}/website" target="_blank">
+        <img src="https://images.opencollective.com/wukong-robot/sponsor/{{ i }}/avatar.svg" 
+             class="sponsor-logo" 
+             alt="Sponsor {{ i }}"
+             onerror="this.style.display='none'; this.parentElement.style.display='none';">
+      </a>
+      {% end %}
     </div>
+    <div class="mt-5 p-4 bg-light rounded-lg">
+      <p class="mb-0 text-muted">目前项目主要由开发者个人维护，期待您的赞助支持。</p>
+      <a href="https://opencollective.com/wukong-robot/contribute/tier/8131-sponsor" target="_blank" class="btn btn-outline-primary btn-sm mt-3 rounded-pill">
+        <i class="fas fa-crown mr-1"></i> 成为赞助商
+      </a>
+    </div>
+  </div>
 
 </div>
 
