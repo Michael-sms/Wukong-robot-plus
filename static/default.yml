@@ -303,9 +303,9 @@ unit:
     # 得到一个机器人 ID ，
     # 然后访问下面页面获取 API Key 和 Secret Key：
     # https://console.bce.baidu.com/ai/#/ai/unit/app/list
-    service_id: 'S13442'  # 机器人ID
-    api_key: 'w5v7gUV3iPGsGntcM84PtOOM'
-    secret_key: 'KffXwW6E1alcGplcabcNs63Li6GvvnfL'
+    service_id: 'xxx'  # 机器人ID
+    api_key: 'xxx'
+    secret_key: 'xxx'
 
 # AnyQ 机器人
 anyq:
