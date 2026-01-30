@@ -1,14 +1,80 @@
 {% extends "layout.html" %}
 {% block body %}
+<style>
+  .config {
+    padding-bottom: 60px;
+  }
+  .glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  }
+  .info-alert {
+    background: rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    color: #7dd3fc;
+    border-radius: 16px;
+    padding: 15px 20px;
+    margin-bottom: 30px;
+  }
+  .custom-range::-webkit-slider-runnable-track {
+    background: #1e293b;
+    height: 8px;
+    border-radius: 4px;
+  }
+  .custom-range::-webkit-slider-thumb {
+    background: var(--primary-color);
+    margin-top: -6px;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+  }
+  label {
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 10px;
+  }
+  #config-placeholder {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 16px;
+    border: 1px solid var(--glass-border);
+    min-height: 400px;
+  }
+  .modal-content {
+    background: #1e293b;
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    color: white;
+  }
+  .modal-header, .modal-footer {
+    border-color: var(--glass-border);
+  }
+</style>
+
 <div class="container config pt-5 mt-4">
-  <div class="alert alert-info" role="alert">
-    <i class="fas fa-bell"></i> 唤醒词和敏感度的修改需重启 wukong-robot 后才生效。
-  </div>
-  <label for="sensitivity">离线唤醒敏感度：<span id="sensitivitiy-value"></span> </label>
-  <input type="range" class="custom-range" min="0" max="1" step="0.1" value="{{sensitivity}}" id="sensitivity">
-  <br/>
-  <label for="config-form">配置文件</label>
-  <div id="config-placeholder">
+  <div class="glass-card">
+    <div class="info-alert" role="alert">
+      <i class="fas fa-info-circle mr-2"></i> <strong>提示：</strong> 唤醒词和敏感度的修改需重启 wukong-robot 后才生效。
+    </div>
+    
+    <div class="mb-5">
+      <label for="sensitivity">离线唤醒敏感度：<span id="sensitivitiy-value" class="badge badge-primary ml-2">{{sensitivity}}</span> </label>
+      <input type="range" class="custom-range mt-2" min="0" max="1" step="0.1" value="{{sensitivity}}" id="sensitivity">
+    </div>
+
+    <div class="mb-3">
+      <label for="config-form" class="h5 d-block mb-3"><i class="fas fa-sliders-h mr-2"></i>核心配置</label>
+      <div id="config-placeholder">
+      </div>
+    </div>
+    
+    <div class="text-right mt-4">
+       <button class="btn btn-primary px-4 py-2 rounded-pill shadow-lg" data-target="#restartModal" data-toggle="modal">
+         <i class="fas fa-sync-alt mr-2"></i> 重启同步配置
+       </button>
+    </div>
   </div>
 </div>
 

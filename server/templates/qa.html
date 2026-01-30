@@ -1,24 +1,79 @@
 {% extends "layout.html" %}
 {% block body %}
-<div class="container api pt-5 mt-4">
-  <div class="alert alert-info" role="alert">
-    <i class="fas fa-bell"></i> 本页面用于维护 wukong-robot 的 <a href="http://github.com/baidu/AnyQ" target="_blank">AnyQ</a> QA 数据集。在配置中将 <code>robot</code> 设为 <code>anyq</code> 后，将会优先选择本 QA 集。<br/>
-    <i class="fas fa-question"></i> 要了解如何安装配置 AnyQ 以及编辑和贡献 QA 数据，可以查看<a href="https://wukong.hahack.com/#/anyq" target="_blank">这篇教程</a>。
-  </div>
-  <label for="qa-form">数据集（请使用制表符 <code>TAB</code> 隔开问题和答案）</label>
-  <form class="form qa-form" action="#">
-    <div class="input-group" id="container">
-      <div class="input-group-prepend">
-        <span class="input-group-text">qa.csv</span>
-      </div>
-        <textarea rows="20" class="form-control" id="qa-input" placer='1' aria-label="With textarea">{% raw content %}</textarea>
+<style>
+  .qa-page {
+    padding-bottom: 60px;
+  }
+  .glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  }
+  .info-alert {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+    border-radius: 16px;
+    padding: 15px 20px;
+    margin-bottom: 30px;
+  }
+  #qa-input {
+    background: rgba(15, 23, 42, 0.6) !important;
+    color: #f8fafc !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 16px !important;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    padding: 20px !important;
+    line-height: 1.6;
+  }
+  #qa-input:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+  }
+  .submit-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 50px;
+    padding: 12px 40px;
+    font-weight: 600;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+  }
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+  }
+  .modal-content {
+    background: #1e293b;
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    color: white;
+  }
+</style>
+
+<div class="container qa-page pt-5 mt-4">
+  <div class="glass-card">
+    <div class="info-alert" role="alert">
+      <i class="fas fa-database mr-2"></i> <strong>AnyQ 知识库维护：</strong> 在配置中将 <code>robot</code> 设为 <code>anyq</code> 后，机器人将优先检索此数据集。
     </div>
-    <hr>
-    <center>
-      <button type="button" class="btn btn-primary mb-2" data-toggle="modal" data-target="#uploadModal"><i class="fas fa-upload"></i> 提交</button>
-    </center>
-  </form>
-  
+    
+    <label for="qa-input" class="h5 mb-3"><i class="fas fa-edit mr-2 text-primary"></i>编辑数据集 (Question [TAB] Answer)</label>
+    
+    <form class="form qa-form" action="#">
+      <textarea rows="20" class="form-control mb-4" id="qa-input" aria-label="QA Dataset">{% raw content %}</textarea>
+      
+      <div class="text-center">
+        <button type="button" class="btn btn-primary submit-btn" data-toggle="modal" data-target="#uploadModal">
+          <i class="fas fa-cloud-upload-alt mr-2"></i> 部署数据集
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="restartModalLabel" aria-hidden="true">

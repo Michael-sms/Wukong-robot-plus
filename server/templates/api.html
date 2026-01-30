@@ -3,8 +3,34 @@
 <link rel="stylesheet" href="{{static_url('starter-template.css')}}" crossorigin="anonymous">
 <link rel="stylesheet" href="{{static_url('api.css')}}" crossorigin="anonymous">
 
+<style>
+  .api-content {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 40px;
+    margin-bottom: 50px;
+  }
+  .api-content h1, .api-content h2 {
+    color: var(--primary-color);
+    margin-top: 1.5rem;
+  }
+  .api-content pre {
+    background: #0f172a !important;
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .api-content code {
+    color: #4ade80;
+  }
+</style>
+
 <div class="container api pt-5 mt-5">
-  {% raw content %}
+  <div class="api-content shadow-lg">
+    {% raw content %}
+  </div>
 </div>
 
 <ul id="recorder" class="mfb-component--br mfb-zoomin" data-mfb-toggle="hover">

@@ -26,49 +26,85 @@
     <style>
       :root {
         --primary-color: #6366f1;
-        --bg-color: #f1f5f9;
-        --card-bg: #ffffff;
-        --text-main: #0f172a;
-        --text-muted: #64748b;
+        --accent-color: #0ea5e9;
+        --bg-color: #0b0f19;
+        --card-bg: rgba(30, 41, 59, 0.7);
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --nav-bg: rgba(15, 23, 42, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.1);
       }
 
       body {
         background-color: var(--bg-color);
+        background-image: 
+          radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0, transparent 50%), 
+          radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.1) 0, transparent 50%);
+        background-attachment: fixed;
         color: var(--text-main);
         font-family: 'Inter', -apple-system, system-ui, sans-serif;
         overflow-x: hidden;
-        padding-top: 56px; /* Navbar height */
+        padding-top: 70px; 
       }
 
       .navbar {
-        background-color: #1e293b !important;
-        padding: 0.5rem 1rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        background-color: var(--nav-bg) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 0.7rem 1rem;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+      }
+
+      .navbar-brand {
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
       }
 
       .navbar-nav .nav-link {
-        color: rgba(255,255,255,0.8) !important;
+        color: var(--text-muted) !important;
         font-weight: 500;
-        padding: 0.5rem 1rem !important;
-        transition: color 0.2s;
+        padding: 0.5rem 1.2rem !important;
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        margin: 0 2px;
       }
 
-      .navbar-nav .nav-item.active .nav-link,
+      .navbar-nav .nav-item.active .nav-link {
+        color: #fff !important;
+        background: rgba(99, 102, 241, 0.2);
+      }
+
       .navbar-nav .nav-link:hover {
         color: #fff !important;
-      }
-
-      .navbar-nav {
-        list-style: none;
-        padding-left: 0;
+        background: rgba(255, 255, 255, 0.05);
       }
 
       .footer {
-        padding: 0.8rem 0;
+        padding: 2rem 0;
         text-align: center;
         background: transparent;
-        border-top: 1px solid #e2e8f0;
+        border-top: 1px solid var(--glass-border);
+        color: var(--text-muted);
         font-size: 0.85rem;
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg-color);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
       }
     </style>
     <!-- Custom styles for this template -->

@@ -18,35 +18,37 @@ var md = window.markdownit({
 function appendHistory(type, message, uuid, plugin) {
     if (!uuid) return;
     if (type == 0) {
-        // 用户消息
+        // 用户消息（右侧）
         $('.history').append(`
-              <div class="right">
-                 <div class="bubble bubble-green">
-                   <div class="bubble-text" id="${uuid}">${message}</div>
+              <div class="row message-row user text-right mb-3">
+                 <div class="col-12">
+                     <div class="bubble user-bubble d-inline-block text-left shadow-sm">
+                       <div class="bubble-text" id="${uuid}">${message}</div>
+                     </div>
                  </div>
               </div>
-`);
+        `);
     } else {
-        messages = message.split('\n');
+        // 机器人消息（左侧）
         $('.history').append(`
-          <div class="left">
-             <div class="bubble bubble-white">
-               <div class="bubble-text" id="${uuid}"></div>
+          <div class="row message-row robot text-left mb-3">
+             <div class="col-12">
+                 <div class="d-flex align-items-start">
+                     <img src="./static/robot.png" class="rounded-circle mr-2" width="36" height="36" alt="Robot">
+                     <div class="bubble robot-bubble d-inline-block shadow-sm">
+                       <div class="bubble-text" id="${uuid}"></div>
+                       ${plugin ? `<div class="mt-1"><span class="badge badge-pill badge-info" style="font-size: 0.75rem; background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3);">${plugin}</span></div>` : ''}
+                     </div>
+                 </div>
              </div>
            </div>
         `);
         $(`#${uuid}`).append(md.render(`${message}`));
-        if (plugin) {
-            $(`#${uuid}`).after(`
-               <span class="badge badge-info plugin">${plugin}</span>
-            `);
-        }
     }
-    $("#"+uuid).hide();
-    $("#"+uuid).fadeIn(500, ()=>{
-        var scrollHeight = $('.history').prop("scrollHeight");
-        $('.history').scrollTop(scrollHeight, 200);
-    });
+    
+    // 自动滚动到底部
+    var historyContainer = $('.history-container');
+    historyContainer.animate({ scrollTop: historyContainer.prop("scrollHeight") }, 500);
 }
 
 function showProgress() {

@@ -1,22 +1,109 @@
 {% extends "layout.html" %}
 {% block body %}
+<style>
+  .log {
+    padding-bottom: 60px;
+  }
+  .glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  }
+  .terminal-container {
+    background: #000;
+    border-radius: 16px;
+    border: 1px solid #333;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .terminal-header {
+    background: #1a1a1a;
+    padding: 8px 15px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #333;
+  }
+  .terminal-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .dot-red { background: #ff5f56; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green { background: #27c93f; }
+  .terminal-title {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    margin: 0 auto;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  #log-input {
+    background: #000 !important;
+    color: #4ade80 !important;
+    border: none !important;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    padding: 20px !important;
+    resize: none;
+    scrollbar-width: thin;
+  }
+  .refresh-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%);
+    border: none;
+    border-radius: 50px;
+    padding: 12px 30px;
+    font-weight: 600;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+  }
+  .refresh-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+  }
+  .info-text {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+</style>
+
 <div class="container log pt-5 mt-4">
-  <div class="alert alert-info" role="alert">
-    <i class="fas fa-bell"></i> 日志不会自动刷新，要查看最新日志，请点击【刷新日志】按钮。
-  </div>
-  <label for="config-form">日志内容</label>
-  <form class="form log-form" action="#">
-    <div class="input-group" id="container">
-      <div class="input-group-prepend">
-        <span class="input-group-text">wukong.log</span>
-      </div>
-        <textarea rows="25" class="form-control" id="log-input" placer='1' aria-label="wukong.log" readonly></textarea>
+  <div class="glass-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="h4 mb-0"><i class="fas fa-terminal mr-2 text-primary"></i>系统日志</h2>
+      <span class="badge badge-dark p-2" style="background: rgba(255,255,255,0.05);">wukong.log</span>
     </div>
-    <hr>
-    <center>
-    <button type="button" class="btn btn-primary mb-2" id="REFRESH"><i class="fas fa-sync"></i> 刷新日志</button>
-    </center>
-  </form>
+    
+    <p class="info-text"><i class="fas fa-info-circle mr-1"></i> 日志流为快照模式，需点击刷新获取最新遥测数据。</p>
+    
+    <div class="terminal-container">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <div class="dot dot-red"></div>
+          <div class="dot dot-yellow"></div>
+          <div class="dot dot-green"></div>
+        </div>
+        <div class="terminal-title">system_session_monitor — 80x24</div>
+      </div>
+      <textarea rows="22" class="form-control" id="log-input" aria-label="wukong.log" readonly></textarea>
+    </div>
+
+    <div class="text-center mt-4">
+      <button type="button" class="btn btn-primary refresh-btn" id="REFRESH">
+        <i class="fas fa-sync-alt mr-2"></i> 刷新日志流
+      </button>
+    </div>
+  </div>
 </div>
 
 
