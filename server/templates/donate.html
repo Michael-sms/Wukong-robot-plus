@@ -2,8 +2,183 @@
 {% block body %}
 <link rel="stylesheet" href="{{static_url('api.css')}}" crossorigin="anonymous">
 
-<div class="container api pt-5 mt-4">
-  {% raw content %}
+<style>
+  .donate-page {
+    padding-bottom: 60px;
+  }
+  
+  .donate-content {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 40px;
+    margin-bottom: 50px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  }
+  
+  .donate-content h1 {
+    color: #6366f1;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    font-weight: 700;
+  }
+  
+  .donate-content h2 {
+    color: #a5b4fc;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  
+  .donate-content h3, .donate-content h4 {
+    color: var(--text-main);
+    font-weight: 600;
+    margin-top: 1.5rem;
+  }
+  
+  .donate-content p, .donate-content li {
+    color: var(--text-main);
+    line-height: 1.7;
+    margin-bottom: 0.8rem;
+  }
+  
+  .donate-content ul, .donate-content ol {
+    padding-left: 1.5rem;
+  }
+  
+  .donate-content a {
+    color: #60a5fa;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  
+  .donate-content a:hover {
+    color: #93c5fd;
+    text-decoration: underline;
+  }
+  
+  /* 表格样式 */
+  .donate-content table {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    border-collapse: collapse;
+    border: 1px solid var(--glass-border);
+    width: 100%;
+    background: rgba(15, 23, 42, 0.3);
+  }
+  
+  .donate-content table th {
+    vertical-align: baseline;
+    padding: 12px 15px;
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid var(--glass-border);
+    text-align: left;
+    color: #e0e7ff;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  
+  .donate-content table td {
+    vertical-align: middle;
+    padding: 10px 15px;
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+  }
+  
+  .donate-content table tr:nth-child(odd) {
+    background: rgba(30, 41, 59, 0.3);
+  }
+  
+  .donate-content table tr:nth-child(even) {
+    background: rgba(15, 23, 42, 0.3);
+  }
+  
+  .donate-content table tr:hover {
+    background: rgba(99, 102, 241, 0.1);
+  }
+  
+  /* 图片样式 - 支付宝和微信二维码 */
+  .donate-content img {
+    max-width: 300px;
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    border: 2px solid var(--glass-border);
+    background: white; /* 为二维码提供白色背景 */
+    padding: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: inline-block;
+    margin: 10px;
+  }
+  
+  .donate-content img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  }
+  
+  /* 图片加载失败时的样式 */
+  .donate-content img::before {
+    content: '';
+    display: block;
+    width: 100%;
+    min-height: 200px;
+  }
+  
+  .donate-content img[alt]::after {
+    content: '💳 ' attr(alt);
+    display: block;
+    text-align: center;
+    color: var(--text-muted);
+    padding: 20px;
+    font-size: 0.9rem;
+  }
+  
+  /* 代码块样式 */
+  .donate-content pre {
+    background: #0f172a !important;
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+    overflow-x: auto;
+  }
+  
+  .donate-content code {
+    color: #4ade80;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  
+  .donate-content pre code {
+    background: transparent;
+    padding: 0;
+  }
+  
+  /* 赞助商图标样式 */
+  .donate-content img[alt*="sponsor"] {
+    filter: brightness(0) invert(1);
+    opacity: 0.7;
+    background: transparent;
+    border: none;
+    padding: 5px;
+  }
+  
+  .donate-content img[alt*="sponsor"]:hover {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+</style>
+
+<div class="container donate-page pt-5 mt-4">
+  <div class="donate-content">
+    {% raw content %}
+  </div>
 </div>
 
 <ul id="recorder" class="mfb-component--br mfb-zoomin" data-mfb-toggle="hover">
@@ -27,6 +202,40 @@
       </li>
 </ul>
 
+<script>
+// 处理图片加载失败的情况
+document.addEventListener('DOMContentLoaded', function() {
+  const images = document.querySelectorAll('.donate-content img');
+  images.forEach(img => {
+    img.onerror = function() {
+      this.style.display = 'block';
+      this.style.minHeight = '250px';
+      this.style.background = 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%)';
+      this.style.border = '2px dashed rgba(99, 102, 241, 0.3)';
+      this.style.position = 'relative';
+      
+      // 创建占位符文本
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'display: flex; align-items: center; justify-content: center; height: 250px; flex-direction: column; padding: 20px;';
+      
+      const icon = document.createElement('i');
+      icon.className = 'fas fa-qrcode';
+      icon.style.cssText = 'font-size: 3rem; color: rgba(99, 102, 241, 0.5); margin-bottom: 15px;';
+      
+      const text = document.createElement('div');
+      text.style.cssText = 'color: var(--text-muted); text-align: center; font-size: 0.9rem;';
+      text.innerHTML = '<strong>' + (this.alt || '二维码') + '</strong><br/>图片加载失败，请检查网络连接';
+      
+      wrapper.appendChild(icon);
+      wrapper.appendChild(text);
+      
+      // 将原图片隐藏，插入占位符
+      this.style.display = 'none';
+      this.parentNode.insertBefore(wrapper, this);
+    };
+  });
+});
+</script>
 
 <script src="{{static_url('main.js')}}" crossorigin="anonymous"></script>
 <script src="{{static_url('log.js')}}" crossorigin="anonymous"></script>

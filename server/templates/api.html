@@ -12,18 +12,101 @@
     padding: 40px;
     margin-bottom: 50px;
   }
-  .api-content h1, .api-content h2 {
-    color: var(--primary-color);
+  
+  .api-content h1 {
+    color: #6366f1;
     margin-top: 1.5rem;
+    font-size: 2rem;
+    font-weight: 700;
   }
+  
+  .api-content h2 {
+    color: #a5b4fc;
+    margin-top: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  
+  .api-content h3, .api-content h4 {
+    color: var(--text-main);
+    font-weight: 600;
+  }
+  
+  .api-content p, .api-content li {
+    color: var(--text-main);
+    line-height: 1.7;
+  }
+  
+  .api-content a {
+    color: #60a5fa;
+    text-decoration: none;
+  }
+  
+  .api-content a:hover {
+    color: #93c5fd;
+    text-decoration: underline;
+  }
+  
+  /* 表格样式重写 */
+  .api-content table {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    border-collapse: collapse;
+    border: 1px solid var(--glass-border);
+    width: 100%;
+    background: rgba(15, 23, 42, 0.3);
+  }
+  
+  .api-content table th {
+    vertical-align: baseline;
+    padding: 12px 15px;
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid var(--glass-border);
+    text-align: left;
+    color: #e0e7ff;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  
+  .api-content table td {
+    vertical-align: middle;
+    padding: 10px 15px;
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+  }
+  
+  .api-content table tr:nth-child(odd) {
+    background: rgba(30, 41, 59, 0.3);
+  }
+  
+  .api-content table tr:nth-child(even) {
+    background: rgba(15, 23, 42, 0.3);
+  }
+  
+  .api-content table tr:hover {
+    background: rgba(99, 102, 241, 0.1);
+  }
+  
+  /* 代码块样式 */
   .api-content pre {
     background: #0f172a !important;
     border-radius: 12px;
     padding: 15px;
     border: 1px solid rgba(255,255,255,0.05);
+    overflow-x: auto;
   }
+  
   .api-content code {
     color: #4ade80;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  
+  .api-content pre code {
+    background: transparent;
+    padding: 0;
   }
 </style>
 
